@@ -1,40 +1,28 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@import "tailwindcss";
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-#root {
-  width: 100%;
-  max-width: 800px;
-}
-
-@media (max-width: 768px) {
+@layer base {
   body {
-    padding: 16px;
-    align-items: flex-start;
-    padding-top: 20px;
+    @apply min-h-screen flex items-center justify-center p-5 bg-gradient-to-br from-indigo-500 to-purple-600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    @apply w-full max-w-6xl;
+  }
+
+  @media (max-width: 768px) {
+    body {
+      @apply p-4 items-start pt-5;
+    }
+  }
+
+  @media (max-width: 480px) {
+    body {
+      @apply p-3 pt-4;
+    }
   }
 }
-
-@media (max-width: 480px) {
-  body {
-    padding: 12px;
-    padding-top: 16px;
-  }
-}
-

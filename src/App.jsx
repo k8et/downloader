@@ -1,17 +1,19 @@
-import { useState } from 'react'
-import VideoDownloader from './components/VideoDownloader'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import Layout from './components/layout/Layout'
+import HomePage from './pages/HomePage'
+import ViewerPage from './pages/ViewerPage'
 
 function App() {
     return (
-        <div className="app">
-            <div className="app-container">
-                <h1 className="app-title">HLS Video Downloader</h1>
-                <VideoDownloader />
-            </div>
-        </div>
+        <Router>
+            <Layout>
+                <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/viewer/:kinopoiskId?" element={<ViewerPage />} />
+                </Routes>
+            </Layout>
+        </Router>
     )
 }
 
 export default App
-
