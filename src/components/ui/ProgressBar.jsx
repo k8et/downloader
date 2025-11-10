@@ -1,8 +1,8 @@
 function ProgressBar({ progress, className = '' }) {
     return (
-        <div className={`w-full h-4 bg-gray-200 rounded-md overflow-hidden relative md:h-5 md:rounded-lg ${className}`}>
+        <div className={`w-full h-1.5 bg-zinc-700 rounded-full overflow-hidden relative ${className}`}>
             <div
-                className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-300 rounded-md md:rounded-lg"
+                className="h-full bg-blue-500 transition-all duration-300 rounded-full"
                 style={{ width: `${progress}%` }}
             />
         </div>

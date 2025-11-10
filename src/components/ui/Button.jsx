@@ -11,12 +11,12 @@ const Button = forwardRef(({
     const baseStyles = 'font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed'
 
     const variants = {
-        primary: 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0',
-        secondary: 'bg-gray-500 text-white hover:bg-gray-600',
-        success: 'bg-green-500 text-white hover:bg-green-600',
-        danger: 'bg-red-500 text-white hover:bg-red-600',
-        info: 'bg-blue-500 text-white hover:bg-blue-600',
-        warning: 'bg-yellow-500 text-white hover:bg-yellow-600'
+        primary: 'bg-blue-600 text-white hover:bg-blue-500 active:bg-blue-700',
+        secondary: 'bg-zinc-700 text-zinc-100 hover:bg-zinc-600 active:bg-zinc-800',
+        success: 'bg-emerald-600 text-white hover:bg-emerald-500 active:bg-emerald-700',
+        danger: 'bg-red-600 text-white hover:bg-red-500 active:bg-red-700',
+        info: 'bg-blue-600 text-white hover:bg-blue-500 active:bg-blue-700',
+        warning: 'bg-amber-600 text-white hover:bg-amber-500 active:bg-amber-700'
     }
 
     const sizes = {

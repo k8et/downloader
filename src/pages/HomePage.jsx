@@ -34,80 +34,81 @@ function HomePage() {
     }
 
     return (
-        <div className="w-full ">
-            <div className="bg-white rounded-lg p-4 shadow-2xl md:rounded-xl md:p-6 lg:rounded-2xl lg:p-10">
-                <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center md:text-3xl lg:text-4xl">
+        <div className="w-full">
+            <div className="mb-8">
+                <h1 className="text-3xl font-light text-zinc-100 mb-2 md:text-4xl lg:text-5xl">
                     Поиск фильмов
                 </h1>
-
-                <form onSubmit={handleSearch} className="mb-6">
-                    <div className="flex flex-col gap-3 md:flex-row md:gap-2.5 lg:gap-3">
-                        <Input
-                            startContent={<Search className="w-5 h-5 text-gray-400" />}
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Введите название фильма..."
-                            className="flex-1 w-full"
-                        />
-                        <Button
-                            type="submit"
-                            variant="primary"
-                            size="lg"
-                            disabled={loading}
-                            className="whitespace-nowrap"
-                        >
-                            {loading ? 'Поиск...' : 'Найти'}
-                        </Button>
-                    </div>
-                </form>
-
-                {error && (
-                    <div className="mb-6 p-3 bg-red-50 text-red-600 rounded-lg border-l-4 border-red-600 text-sm">
-                        {error.message || 'Не удалось загрузить фильмы. Проверьте API ключ.'}
-                    </div>
-                )}
-
-                {!loading && movies.length === 0 && !error && (
-                    <div className="text-center py-12 text-gray-500">
-                        <Film className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <p>Начните поиск фильмов</p>
-                    </div>
-                )}
-
-                {movies.length > 0 && (
-                    <>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                            {movies.map((movie, index) => (
-                                <MovieCard
-                                    key={movie.kinopoiskId || movie.filmId || index}
-                                    movie={movie}
-                                />
-                            ))}
-                        </div>
-
-                        {hasMore && (
-                            <div className="mt-6 text-center">
-                                <Button
-                                    onClick={handleLoadMore}
-                                    variant="secondary"
-                                    size="md"
-                                    disabled={loading}
-                                >
-                                    {loading ? 'Загрузка...' : 'Загрузить еще'}
-                                </Button>
-                            </div>
-                        )}
-                    </>
-                )}
-
-                {loading && movies.length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
-                        <p className="mt-4 text-gray-600">Загрузка...</p>
-                    </div>
-                )}
+                <p className="text-zinc-400 text-sm">Найдите и скачайте любимые фильмы</p>
             </div>
+
+            <form onSubmit={handleSearch} className="mb-8">
+                <div className="flex flex-col gap-3 md:flex-row md:gap-3">
+                    <Input
+                        startContent={<Search className="w-5 h-5 text-zinc-500" />}
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Введите название фильма..."
+                        className="flex-1 w-full"
+                    />
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        size="lg"
+                        disabled={loading}
+                        className="whitespace-nowrap"
+                    >
+                        {loading ? 'Поиск...' : 'Найти'}
+                    </Button>
+                </div>
+            </form>
+
+            {error && (
+                <div className="mb-6 p-4 bg-red-950/30 border border-red-800/50 text-red-400 rounded-lg text-sm">
+                    {error.message || 'Не удалось загрузить фильмы. Проверьте API ключ.'}
+                </div>
+            )}
+
+            {!loading && movies.length === 0 && !error && (
+                <div className="text-center py-16 text-zinc-500">
+                    <Film className="w-20 h-20 mx-auto mb-4 text-zinc-700" />
+                    <p className="text-zinc-400">Начните поиск фильмов</p>
+                </div>
+            )}
+
+            {movies.length > 0 && (
+                <>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
+                        {movies.map((movie, index) => (
+                            <MovieCard
+                                key={movie.kinopoiskId || movie.filmId || index}
+                                movie={movie}
+                            />
+                        ))}
+                    </div>
+
+                    {hasMore && (
+                        <div className="mt-8 text-center">
+                            <Button
+                                onClick={handleLoadMore}
+                                variant="secondary"
+                                size="md"
+                                disabled={loading}
+                            >
+                                {loading ? 'Загрузка...' : 'Загрузить еще'}
+                            </Button>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {loading && movies.length === 0 && (
+                <div className="text-center py-16">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-2 border-zinc-700 border-t-blue-500"></div>
+                    <p className="mt-4 text-zinc-400">Загрузка...</p>
+                </div>
+            )}
         </div>
     )
 }

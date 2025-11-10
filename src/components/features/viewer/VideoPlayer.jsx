@@ -7,7 +7,7 @@ function VideoPlayer({ url, iframeKey, onMessage }) {
     useIframeScript(iframeRef, iframeKey)
 
     return (
-        <div className="border border-gray-300 rounded-lg overflow-hidden">
+        <div className="border border-zinc-700/50 rounded-lg overflow-hidden bg-zinc-900">
             <iframe
                 ref={iframeRef}
                 key={iframeKey}

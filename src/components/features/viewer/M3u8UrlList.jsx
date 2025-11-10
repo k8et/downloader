@@ -14,15 +14,15 @@ function M3u8UrlList({ urls, onDownload }) {
     }
 
     return (
-        <div className="p-3 bg-green-50 border-2 border-green-500 rounded-lg">
-            <h4 className="font-semibold text-green-800 mb-2 text-sm md:text-base">
+        <div className="p-4 bg-zinc-800/50 border border-emerald-500/30 rounded-lg">
+            <h4 className="font-medium text-emerald-400 mb-3 text-sm md:text-base">
                 Найдено {urls.length} .m3u8 манифест(ов):
             </h4>
             <div className="space-y-2">
                 {urls.map((m3u8Url, index) => (
-                    <div key={index} className="bg-white p-2 rounded border border-green-200">
+                    <div key={index} className="bg-zinc-900/50 p-3 rounded-lg border border-zinc-700/50">
                         <div className="flex items-start justify-between gap-2 flex-wrap">
-                            <code className="flex-1 text-xs text-gray-700 break-all font-mono md:text-sm">
+                            <code className="flex-1 text-xs text-zinc-300 break-all font-mono md:text-sm">
                                 {m3u8Url}
                             </code>
                             <div className="flex gap-2 flex-shrink-0">
