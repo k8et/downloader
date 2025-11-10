@@ -41,6 +41,48 @@
   white-space: nowrap;
 }
 
+@media (max-width: 768px) {
+  .video-downloader {
+    gap: 16px;
+  }
+
+  .input-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .download-button {
+    width: 100%;
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+
+  .url-input {
+    font-size: 15px;
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .video-downloader {
+    gap: 12px;
+  }
+
+  .input-group {
+    gap: 8px;
+  }
+
+  .download-button {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .url-input {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+}
+
 .download-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
@@ -107,6 +149,52 @@
   font-family: monospace;
 }
 
+@media (max-width: 768px) {
+  .downloads-list {
+    gap: 12px;
+  }
+
+  .downloads-header {
+    font-size: 16px;
+  }
+
+  .download-item {
+    padding: 12px;
+    gap: 10px;
+    border-radius: 10px;
+  }
+
+  .download-item-header {
+    gap: 8px;
+  }
+
+  .download-item-url {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .downloads-list {
+    gap: 10px;
+  }
+
+  .downloads-header {
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+
+  .download-item {
+    padding: 10px;
+    gap: 8px;
+    border-radius: 8px;
+  }
+
+  .download-item-url {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+}
+
 .cancel-button {
   background: #ff4444;
   color: white;
@@ -149,6 +237,17 @@
   border-radius: 10px;
 }
 
+@media (max-width: 480px) {
+  .progress-bar {
+    height: 16px;
+    border-radius: 8px;
+  }
+
+  .progress-fill {
+    border-radius: 8px;
+  }
+}
+
 .download-item-info {
   display: flex;
   gap: 16px;
@@ -180,6 +279,49 @@
   font-size: 13px;
   color: #666;
   font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .download-item-info {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .download-progress-text {
+    font-size: 15px;
+    min-width: 45px;
+  }
+
+  .download-speed,
+  .download-size {
+    font-size: 13px;
+  }
+
+  .download-status {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .download-item-info {
+    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .download-progress-text {
+    font-size: 14px;
+    min-width: auto;
+  }
+
+  .download-speed,
+  .download-size {
+    font-size: 12px;
+  }
+
+  .download-status {
+    font-size: 11px;
+  }
 }
 
 .download-error {

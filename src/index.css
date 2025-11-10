@@ -23,3 +23,18 @@ body {
   max-width: 800px;
 }
 
+@media (max-width: 768px) {
+  body {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 12px;
+    padding-top: 16px;
+  }
+}
+

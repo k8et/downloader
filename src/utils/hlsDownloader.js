@@ -152,18 +152,9 @@ export async function downloadHLSVideo(url, onProgress, onCancel = null) {
         onProgress(segments.length, segments.length, 'Объединение сегментов...', finalSpeed, totalDownloaded)
     }
 
-    const totalLength = successfulSegments.reduce((sum, buf) => sum + buf.byteLength, 0)
-    const mergedBuffer = new Uint8Array(totalLength)
-    let offset = 0
-
-    for (const buffer of successfulSegments) {
-        mergedBuffer.set(new Uint8Array(buffer), offset)
-        offset += buffer.byteLength
-    }
-
     onProgress(segments.length, segments.length, 'Создание файла...', finalSpeed, totalDownloaded)
 
-    const blob = new Blob([mergedBuffer], { type: 'video/mp4' })
+    const blob = new Blob(successfulSegments, { type: 'video/mp4' })
     const downloadUrl = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
