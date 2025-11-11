@@ -52,19 +52,14 @@ export const AuthProvider = ({ children }) => {
     }
 
     const signInWithGoogle = async () => {
-        const getRedirectUrl = () => {
-            const origin = window.location.origin
-            if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-                return `${origin}/`
-            }
-            const productionUrl = import.meta.env.VITE_APP_URL || origin
-            return `${productionUrl}/`
-        }
+        const redirectUrl = import.meta.env.VITE_APP_URL
+            ? `${import.meta.env.VITE_APP_URL}/`
+            : `${window.location.origin}/`
 
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: getRedirectUrl(),
+                redirectTo: redirectUrl,
             },
         })
         return { data, error }
