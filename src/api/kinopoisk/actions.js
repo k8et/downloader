@@ -102,11 +102,25 @@ export const getFilmsByFilter = async (filters = {}, page = 1) => {
     }
 
     try {
+        const processedFilters = {}
+
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value === undefined || value === null || value === '') return
+
+            if (key === 'genres' || key === 'countries') {
+                if (Array.isArray(value) && value.length > 0) {
+                    processedFilters[key] = value[0]
+                } else if (!Array.isArray(value)) {
+                    processedFilters[key] = value
+                }
+            } else {
+                processedFilters[key] = value
+            }
+        })
+
         const params = new URLSearchParams({
             page: page.toString(),
-            ...Object.fromEntries(
-                Object.entries(filters).filter(([_, value]) => value !== undefined && value !== null && value !== '')
-            )
+            ...processedFilters
         })
 
         const response = await fetch(
@@ -130,6 +144,31 @@ export const getFilmsByFilter = async (filters = {}, page = 1) => {
         }
     } catch (error) {
         console.error('Error fetching films by filter:', error)
+        throw error
+    }
+}
+
+export const getFilters = async () => {
+    if (!API_KEY) {
+        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
+    }
+
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/api/v2.2/films/filters`,
+            {
+                headers: getHeaders()
+            }
+        )
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+        }
+
+        return await response.json()
+    } catch (error) {
+        console.error('Error fetching filters:', error)
         throw error
     }
 }

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { downloadHLSVideo } from '../../../utils/hlsDownloader'
-import Button from '../../ui/Button'
-import Input from '../../ui/Input'
+import { useGetFilmById } from '../../../api/kinopoisk/hooks'
+import { useWatchHistoryTimer } from '../../../hooks/useWatchHistoryTimer'
 import VideoPlayer from './VideoPlayer'
 import M3u8UrlList from './M3u8UrlList'
 import DownloadList from './DownloadList'
 import DownloadInstructions from './DownloadInstructions'
+
 function VideoViewer() {
     const { kinopoiskId } = useParams()
     const [viewerUrl, setViewerUrl] = useState('')
@@ -14,14 +15,24 @@ function VideoViewer() {
     const [iframeKey, setIframeKey] = useState(0)
     const [manualUrl, setManualUrl] = useState('')
     const [downloads, setDownloads] = useState([])
+    const [playerLoaded, setPlayerLoaded] = useState(false)
+
+    const { data: filmData } = useGetFilmById(kinopoiskId, {
+        enabled: !!kinopoiskId
+    })
+
+    const playerOpened = !!kinopoiskId && playerLoaded
+    useWatchHistoryTimer(filmData, kinopoiskId, playerOpened)
 
     useEffect(() => {
         if (kinopoiskId) {
             setViewerUrl(`https://iframe.cloud/iframe/${kinopoiskId}`)
             setFoundM3u8Urls([])
             setIframeKey(prev => prev + 1)
+            setPlayerLoaded(false)
         } else {
             setViewerUrl('')
+            setPlayerLoaded(false)
         }
     }, [kinopoiskId])
 
@@ -122,6 +133,7 @@ function VideoViewer() {
                 <VideoPlayer
                     url={viewerUrl}
                     iframeKey={iframeKey}
+                    onPlayerLoaded={setPlayerLoaded}
                 />
             )}
 

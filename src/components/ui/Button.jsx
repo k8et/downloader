@@ -28,7 +28,7 @@ const Button = forwardRef(({
     return (
         <button
             ref={ref}
-            className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+            className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className} flex items-center justify-center`}
             disabled={disabled}
             {...props}
         >
