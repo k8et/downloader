@@ -132,7 +132,7 @@ function LoginPage() {
                                 <div className="w-full border-t border-zinc-700/50"></div>
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="px-4 bg-zinc-800/50 text-zinc-400">или</span>
+                                <span className="px-4 text-zinc-400 mb-[2px]">или</span>
                             </div>
                         </div>
 
