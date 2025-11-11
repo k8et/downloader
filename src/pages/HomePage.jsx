@@ -200,7 +200,7 @@ function HomePage() {
                 <h1 className="text-3xl font-light text-zinc-100 mb-2 md:text-4xl lg:text-5xl">
                     Поиск фильмов
                 </h1>
-                <p className="text-zinc-400 text-sm">Найдите и скачайте любимые фильмы</p>
+                <p className="text-zinc-400 text-sm">Найдите и смотрите любимые фильмы</p>
             </div>
 
             <ContentTabs
