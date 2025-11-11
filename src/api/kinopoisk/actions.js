@@ -173,3 +173,54 @@ export const getFilters = async () => {
     }
 }
 
+export const getFilmStaff = async (filmId) => {
+    if (!API_KEY) {
+        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
+    }
+
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/api/v1/staff?filmId=${filmId}`,
+            {
+                headers: getHeaders()
+            }
+        )
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+        }
+
+        return await response.json()
+    } catch (error) {
+        console.error('Error fetching film staff:', error)
+        throw error
+    }
+}
+
+export const getSimilarFilms = async (filmId) => {
+    if (!API_KEY) {
+        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
+    }
+
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/api/v2.2/films/${filmId}/similars`,
+            {
+                headers: getHeaders()
+            }
+        )
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+        return data.items || []
+    } catch (error) {
+        console.error('Error fetching similar films:', error)
+        throw error
+    }
+}
+

@@ -1,25 +1,18 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
 import { downloadHLSVideo } from '../../../utils/hlsDownloader'
-import { useGetFilmById } from '../../../api/kinopoisk/hooks'
 import { useWatchHistoryTimer } from '../../../hooks/useWatchHistoryTimer'
 import VideoPlayer from './VideoPlayer'
 import M3u8UrlList from './M3u8UrlList'
 import DownloadList from './DownloadList'
 import DownloadInstructions from './DownloadInstructions'
 
-function VideoViewer() {
-    const { kinopoiskId } = useParams()
+function VideoViewer({ filmData, kinopoiskId }) {
     const [viewerUrl, setViewerUrl] = useState('')
     const [foundM3u8Urls, setFoundM3u8Urls] = useState([])
     const [iframeKey, setIframeKey] = useState(0)
     const [manualUrl, setManualUrl] = useState('')
     const [downloads, setDownloads] = useState([])
     const [playerLoaded, setPlayerLoaded] = useState(false)
-
-    const { data: filmData } = useGetFilmById(kinopoiskId, {
-        enabled: !!kinopoiskId
-    })
 
     const playerOpened = !!kinopoiskId && playerLoaded
     useWatchHistoryTimer(filmData, kinopoiskId, playerOpened)
@@ -137,12 +130,14 @@ function VideoViewer() {
                 />
             )}
 
-            <DownloadInstructions
-                manualUrl={manualUrl}
-                setManualUrl={setManualUrl}
-                onAddUrl={handleAddManualUrl}
-                isOurPlayer={!!kinopoiskId}
-            />
+            {kinopoiskId && (
+                <DownloadInstructions
+                    manualUrl={manualUrl}
+                    setManualUrl={setManualUrl}
+                    onAddUrl={handleAddManualUrl}
+                    isOurPlayer={!!kinopoiskId}
+                />
+            )}
 
             <M3u8UrlList
                 urls={foundM3u8Urls}

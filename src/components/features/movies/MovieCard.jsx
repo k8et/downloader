@@ -72,7 +72,7 @@ function MovieCard({ movie }) {
         }
     }
 
-    const year = movie.year || '—'
+    const year = movie.year || ""
     const description = movie.description || movie.shortDescription || ''
 
     return (
@@ -127,10 +127,12 @@ function MovieCard({ movie }) {
                             <span className="font-medium">{typeof rating === 'number' ? rating.toFixed(1) : rating}</span>
                         </div>
                     )}
-                    <div className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{year}</span>
-                    </div>
+                    {year.length > 0 && (
+                        <div className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>{year}</span>
+                        </div>
+                    )}
                 </div>
                 {description && (
                     <p className="text-xs text-zinc-500 line-clamp-2">

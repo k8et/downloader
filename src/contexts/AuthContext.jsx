@@ -56,8 +56,6 @@ export const AuthProvider = ({ children }) => {
             ? `${import.meta.env.VITE_APP_URL}/`
             : `${window.location.origin}/`
 
-        console.log('OAuth redirect URL:', redirectUrl)
-
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
