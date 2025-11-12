@@ -6,7 +6,7 @@ import { useAuth } from '../../../contexts/AuthContext'
 import { addToFavorites, removeFromFavorites } from '../../../lib/supabaseQueries'
 import { useIsFavorite } from '../../../api/supabase/hooks'
 
-function MovieCard({ movie }) {
+function MovieCard({ movie, hideFavorite = false }) {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const { user } = useAuth()
@@ -90,7 +90,7 @@ function MovieCard({ movie }) {
                             e.target.style.display = 'none'
                         }}
                     />
-                    {user && (
+                    {user && !hideFavorite && (
                         <button
                             onClick={handleFavoriteClick}
                             disabled={loading}
@@ -104,7 +104,7 @@ function MovieCard({ movie }) {
             ) : (
                 <div className="w-full aspect-[2/3] bg-zinc-900 flex items-center justify-center relative">
                     <Film className="w-16 h-16 text-zinc-600" />
-                    {user && (
+                    {user && !hideFavorite && (
                         <button
                             onClick={handleFavoriteClick}
                             disabled={loading}

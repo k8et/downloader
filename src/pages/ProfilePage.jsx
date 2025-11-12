@@ -218,13 +218,16 @@ function ProfilePage() {
                                     )}
                                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
                                         {filteredWatchHistory.map((item) => (
-                                            <div key={item.kinopoisk_id} className="relative group">
-                                                <MovieCard movie={item.film_data} />
+                                            <div key={item.kinopoisk_id} className="relative">
+                                                <MovieCard movie={item.film_data} hideFavorite={true} />
                                                 <Button
-                                                    onClick={() => handleRemoveFromHistory(item.kinopoisk_id)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleRemoveFromHistory(item.kinopoisk_id)
+                                                    }}
                                                     variant="secondary"
                                                     size="sm"
-                                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute top-2 right-2 z-10"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
@@ -260,13 +263,16 @@ function ProfilePage() {
                                     )}
                                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
                                         {filteredFavorites.map((item) => (
-                                            <div key={item.kinopoisk_id} className="relative group">
-                                                <MovieCard movie={item.film_data} />
+                                            <div key={item.kinopoisk_id} className="relative">
+                                                <MovieCard movie={item.film_data} hideFavorite={true} />
                                                 <Button
-                                                    onClick={() => handleRemoveFavorite(item.kinopoisk_id)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleRemoveFavorite(item.kinopoisk_id)
+                                                    }}
                                                     variant="secondary"
                                                     size="sm"
-                                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute top-2 right-2 z-10"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
