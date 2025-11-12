@@ -102,14 +102,17 @@ function HomePage() {
         })
     }, [filters])
 
-    const shouldUseFilters = hasActiveFilters || !!debouncedSearchQuery
+    const shouldUseFilters = hasActiveFilters
+    const shouldUseSearch = !!debouncedSearchQuery && !hasActiveFilters
     const shouldUsePopular = !hasActiveFilters && !debouncedSearchQuery
 
     const popularMoviesQuery = useGetPopularFilms({
         enabled: !!shouldUsePopular
     })
 
-    const searchMoviesQuery = useSearchFilms(debouncedSearchQuery)
+    const searchMoviesQuery = useSearchFilms(debouncedSearchQuery, {
+        enabled: !!shouldUseSearch
+    })
 
     const filtersQuery = useGetFilmsByFilter(
         {
@@ -123,9 +126,11 @@ function HomePage() {
 
     const activeQuery = shouldUseFilters
         ? filtersQuery
-        : popularMoviesQuery
+        : shouldUseSearch
+            ? searchMoviesQuery
+            : popularMoviesQuery
 
-    const movies = activeQuery.data?.pages.flatMap(page => page.docs || page.items || []) || []
+    const movies = activeQuery.data?.pages.flatMap(page => page.docs || page.items || page.films || []) || []
     const loading = activeQuery.isLoading || activeQuery.isFetchingNextPage
     const hasMore = activeQuery.hasNextPage
     const error = activeQuery.error

@@ -137,10 +137,10 @@ export const getFilmsByFilter = async (filters = {}, page = 1) => {
 
         const data = await response.json()
         return {
-            docs: data.items || [],
+            docs: data.items || data.films || [],
             page: page,
-            pages: data.totalPages || 1,
-            total: data.total || 0
+            pages: data.totalPages || data.pagesCount || 1,
+            total: data.total || data.searchFilmsCountResult || 0
         }
     } catch (error) {
         console.error('Error fetching films by filter:', error)
