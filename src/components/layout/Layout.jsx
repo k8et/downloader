@@ -1,17 +1,11 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Home, Video, LogOut, User } from 'lucide-react'
+import { Home, User } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-import Button from '../ui/Button'
 
 function Layout({ children }) {
     const location = useLocation()
     const navigate = useNavigate()
-    const { user, signOut } = useAuth()
-
-    const handleSignOut = async () => {
-        await signOut()
-        navigate('/login')
-    }
+    const { user } = useAuth()
 
     return (
         <div className="min-h-screen bg-zinc-900">
@@ -29,40 +23,19 @@ function Layout({ children }) {
                                 <Home className="w-4 h-4 mr-2" />
                                 Главная
                             </button>
-                            <Link
-                                to="/viewer"
-                                className={`inline-flex items-center px-4 py-2 border-b-2 text-sm font-medium transition-all ${location.pathname.startsWith('/viewer')
-                                    ? 'border-blue-500 text-blue-400'
-                                    : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-600'
-                                    }`}
-                            >
-                                <Video className="w-4 h-4 mr-2" />
-                                Просмотр
-                            </Link>
                         </div>
                         <div className="flex items-center gap-3">
                             {user ? (
-                                <>
-                                    <Link
-                                        to="/profile"
-                                        className={`inline-flex items-center px-4 py-2 border-b-2 text-sm font-medium transition-all ${location.pathname === '/profile'
-                                            ? 'border-blue-500 text-blue-400'
-                                            : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-600'
-                                            }`}
-                                    >
-                                        <User className="w-4 h-4 mr-2" />
-                                        <span className="hidden sm:inline">Профиль</span>
-                                    </Link>
-                                    <Button
-                                        onClick={handleSignOut}
-                                        variant="secondary"
-                                        size="sm"
-                                        className="flex items-center"
-                                    >
-                                        <LogOut className="w-4 h-4 mr-1" />
-                                        <span className="hidden sm:inline">Выйти</span>
-                                    </Button>
-                                </>
+                                <Link
+                                    to="/profile"
+                                    className={`inline-flex items-center px-4 py-2 border-b-2 text-sm font-medium transition-all ${location.pathname === '/profile'
+                                        ? 'border-blue-500 text-blue-400'
+                                        : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-600'
+                                        }`}
+                                >
+                                    <User className="w-4 h-4 mr-2" />
+                                    <span className="hidden sm:inline">Профиль</span>
+                                </Link>
                             ) : (
                                 <Link
                                     to="/login"

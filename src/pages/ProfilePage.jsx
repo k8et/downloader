@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { removeFromFavorites, removeFromWatchHistory } from '../lib/supabaseQueries'
 import { useWatchHistory, useFavorites, usePrefetchWatchHistory, usePrefetchFavorites } from '../api/supabase/hooks'
@@ -7,14 +8,20 @@ import { useDebounce } from '../hooks/useDebounce'
 import MovieCard from '../components/features/movies/MovieCard'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
-import { History, Heart, Trash2, Loader2, Search } from 'lucide-react'
+import { History, Heart, Trash2, Loader2, Search, LogOut } from 'lucide-react'
 
 function ProfilePage() {
-    const { user } = useAuth()
+    const { user, signOut } = useAuth()
+    const navigate = useNavigate()
     const queryClient = useQueryClient()
     const [activeTab, setActiveTab] = useState('history')
     const [searchQuery, setSearchQuery] = useState('')
     const debouncedSearchQuery = useDebounce(searchQuery.trim(), 300)
+
+    const handleSignOut = async () => {
+        await signOut()
+        navigate('/login')
+    }
 
     const prefetchWatchHistory = usePrefetchWatchHistory()
     const prefetchFavorites = usePrefetchFavorites()
@@ -122,11 +129,22 @@ function ProfilePage() {
 
     return (
         <div className="w-full">
-            <div className="mb-8">
-                <h1 className="text-3xl font-light text-zinc-100 mb-2 md:text-4xl lg:text-5xl">
-                    Профиль
-                </h1>
-                <p className="text-zinc-400 text-sm">{user?.email}</p>
+            <div className="mb-8 flex justify-between items-start">
+                <div>
+                    <h1 className="text-3xl font-light text-zinc-100 mb-2 md:text-4xl lg:text-5xl">
+                        Профиль
+                    </h1>
+                    <p className="text-zinc-400 text-sm">{user?.email}</p>
+                </div>
+                <Button
+                    onClick={handleSignOut}
+                    variant="secondary"
+                    size="md"
+                    className="flex items-center gap-2"
+                >
+                    <LogOut className="w-4 h-4" />
+                    <span>Выйти</span>
+                </Button>
             </div>
 
             <div className="mb-6">
