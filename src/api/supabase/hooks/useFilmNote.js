@@ -18,7 +18,6 @@ export const useSaveFilmNote = () => {
         mutationFn: ({ userId, kinopoiskId, note }) => saveFilmNote(userId, kinopoiskId, note),
         onSuccess: (data, variables) => {
             queryClient.setQueryData(['filmNote', variables.userId, variables.kinopoiskId], data)
-            queryClient.invalidateQueries({ queryKey: ['filmNote', variables.userId, variables.kinopoiskId] })
         }
     })
 }
@@ -30,7 +29,6 @@ export const useDeleteFilmNote = () => {
         mutationFn: ({ userId, kinopoiskId }) => deleteFilmNote(userId, kinopoiskId),
         onSuccess: (data, variables) => {
             queryClient.setQueryData(['filmNote', variables.userId, variables.kinopoiskId], null)
-            queryClient.invalidateQueries({ queryKey: ['filmNote', variables.userId, variables.kinopoiskId] })
         }
     })
 }

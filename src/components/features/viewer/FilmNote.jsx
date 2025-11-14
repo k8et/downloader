@@ -6,7 +6,7 @@ import { FileText, Save, Trash2, X } from 'lucide-react'
 
 function FilmNote({ kinopoiskId }) {
     const { user } = useAuth()
-    const { data: noteData, isLoading } = useFilmNote(user?.id, kinopoiskId)
+    const { data: noteData, isLoading, refetch } = useFilmNote(user?.id, kinopoiskId)
     const saveNoteMutation = useSaveFilmNote()
     const deleteNoteMutation = useDeleteFilmNote()
 
@@ -40,6 +40,7 @@ function FilmNote({ kinopoiskId }) {
                 kinopoiskId: parseInt(kinopoiskId),
                 note: noteText
             })
+            await refetch()
             setIsEditing(false)
         } catch (error) {
             console.error('Error saving note:', error)
@@ -56,6 +57,7 @@ function FilmNote({ kinopoiskId }) {
                 userId: user.id,
                 kinopoiskId: parseInt(kinopoiskId)
             })
+            await refetch()
             setNoteText('')
             setIsEditing(false)
         } catch (error) {
