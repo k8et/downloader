@@ -70,6 +70,15 @@ function FilmNote({ kinopoiskId }) {
         setIsEditing(false)
     }
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            if (noteText.trim() && !saveNoteMutation.isPending) {
+                handleSave()
+            }
+        }
+    }
+
     const hasNote = noteData && noteData.note
 
     return (
@@ -86,7 +95,8 @@ function FilmNote({ kinopoiskId }) {
                     <textarea
                         value={noteText}
                         onChange={(e) => setNoteText(e.target.value)}
-                        placeholder="Введите вашу заметку о фильме..."
+                        onKeyDown={handleKeyDown}
+                        placeholder="Введите вашу заметку о фильме... (Shift+Enter для переноса строки)"
                         className="w-full min-h-[120px] px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 resize-y transition-all focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         autoFocus
                     />

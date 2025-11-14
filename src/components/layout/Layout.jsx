@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Home, User } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import FilmSearch from '../features/movies/FilmSearch'
 
 function Layout({ children }) {
     const location = useLocation()
@@ -11,7 +12,7 @@ function Layout({ children }) {
         <div className="min-h-screen bg-zinc-900">
             <nav className="bg-zinc-800/50 backdrop-blur-sm border-b border-zinc-700/50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
+                    <div className="flex justify-between items-center h-16 gap-4">
                         <div className="flex">
                             <button
                                 onClick={() => navigate('/')}
@@ -24,7 +25,10 @@ function Layout({ children }) {
                                 Главная
                             </button>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4 justify-end flex-1">
+                            <div className="hidden md:block max-w-md w-full">
+                                <FilmSearch />
+                            </div>
                             {user ? (
                                 <Link
                                     to="/profile"
@@ -46,6 +50,9 @@ function Layout({ children }) {
                                 </Link>
                             )}
                         </div>
+                    </div>
+                    <div className="md:hidden w-full pb-4">
+                        <FilmSearch />
                     </div>
                 </div>
             </nav>
