@@ -109,3 +109,54 @@ export const isFavorite = async (userId, kinopoiskId) => {
     return !!data
 }
 
+export const getFilmNote = async (userId, kinopoiskId) => {
+    const { data, error } = await supabase
+        .from('film_notes')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('kinopoisk_id', kinopoiskId)
+        .maybeSingle()
+
+    if (error && error.code !== 'PGRST116') {
+        throw error
+    }
+
+    return data
+}
+
+export const saveFilmNote = async (userId, kinopoiskId, note) => {
+    const { data, error } = await supabase
+        .from('film_notes')
+        .upsert({
+            user_id: userId,
+            kinopoisk_id: kinopoiskId,
+            note: note.trim(),
+            updated_at: new Date().toISOString(),
+        }, {
+            onConflict: 'user_id,kinopoisk_id'
+        })
+        .select()
+        .single()
+
+    if (error) {
+        throw error
+    }
+
+    return data
+}
+
+export const deleteFilmNote = async (userId, kinopoiskId) => {
+    const { data, error } = await supabase
+        .from('film_notes')
+        .delete()
+        .eq('user_id', userId)
+        .eq('kinopoisk_id', kinopoiskId)
+        .select()
+
+    if (error) {
+        throw error
+    }
+
+    return data
+}
+

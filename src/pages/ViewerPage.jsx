@@ -5,6 +5,7 @@ import VideoViewer from '../components/features/viewer/VideoViewer'
 import FilmDescription from '../components/features/viewer/FilmDescription'
 import FilmActors from '../components/features/viewer/FilmActors'
 import SimilarFilms from '../components/features/viewer/SimilarFilms'
+import FilmNote from '../components/features/viewer/FilmNote'
 
 function ViewerPage() {
     const { kinopoiskId } = useParams()
@@ -56,6 +57,7 @@ function ViewerPage() {
             {filmData && (
                 <>
                     <FilmDescription film={filmData} />
+                    <FilmNote kinopoiskId={kinopoiskId} />
                     <VideoViewer filmData={filmData} kinopoiskId={kinopoiskId} />
                     {staffData && <FilmActors staff={staffData} />}
                     {similarFilms && similarFilms.length > 0 && <SimilarFilms films={similarFilms} />}

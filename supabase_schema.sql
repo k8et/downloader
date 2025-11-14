@@ -58,3 +58,39 @@ CREATE POLICY "Users can delete their own favorites"
     ON favorites FOR DELETE
     USING (auth.uid() = user_id);
 
+-- Таблица для заметок к фильмам
+CREATE TABLE IF NOT EXISTS film_notes (
+    id BIGSERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    kinopoisk_id INTEGER NOT NULL,
+    note TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, kinopoisk_id)
+);
+
+-- Индексы для заметок
+CREATE INDEX IF NOT EXISTS idx_film_notes_user_id ON film_notes(user_id);
+CREATE INDEX IF NOT EXISTS idx_film_notes_kinopoisk_id ON film_notes(kinopoisk_id);
+CREATE INDEX IF NOT EXISTS idx_film_notes_updated_at ON film_notes(updated_at DESC);
+
+-- Row Level Security для заметок
+ALTER TABLE film_notes ENABLE ROW LEVEL SECURITY;
+
+-- Политики для film_notes
+CREATE POLICY "Users can view their own film notes"
+    ON film_notes FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own film notes"
+    ON film_notes FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own film notes"
+    ON film_notes FOR UPDATE
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own film notes"
+    ON film_notes FOR DELETE
+    USING (auth.uid() = user_id);
+
