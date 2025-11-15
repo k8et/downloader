@@ -7,9 +7,32 @@ import MovieCard from '../components/features/movies/MovieCard'
 function PersonPage() {
     const { personId } = useParams()
 
-    const { data: personData, isLoading, error } = useGetPersonById(personId, {
+    const { data: personData, isLoading, error, isError } = useGetPersonById(personId, {
         enabled: !!personId
     })
+
+    const allFilms = personData?.films || []
+    const uniqueFilms = useMemo(() => {
+        const seen = new Set()
+        return allFilms.filter((film) => {
+            const filmName = (film.nameRu || film.nameEn || film.nameOriginal || `film-${film.filmId}`).toLowerCase().trim()
+            if (seen.has(filmName)) {
+                return false
+            }
+            seen.add(filmName)
+            return true
+        })
+    }, [allFilms])
+
+    if (!personId) {
+        return (
+            <div className="w-full">
+                <div className="mb-6 p-4 bg-zinc-800/30 border border-zinc-700/50 text-zinc-400 rounded-lg text-sm">
+                    ID персоны не указан
+                </div>
+            </div>
+        )
+    }
 
     if (isLoading) {
         return (
@@ -22,11 +45,15 @@ function PersonPage() {
         )
     }
 
-    if (error) {
+    if (isError || error) {
         return (
             <div className="w-full">
                 <div className="mb-6 p-4 bg-red-950/30 border border-red-800/50 text-red-400 rounded-lg text-sm">
-                    {error.message || 'Ошибка загрузки информации о персоне'}
+                    <p className="font-medium mb-2">Ошибка загрузки информации о персоне</p>
+                    <p className="text-sm">{error?.message || 'Не удалось загрузить данные'}</p>
+                    {personId && (
+                        <p className="text-xs mt-2 text-red-300">ID: {personId}</p>
+                    )}
                 </div>
             </div>
         )
@@ -36,26 +63,16 @@ function PersonPage() {
         return (
             <div className="w-full">
                 <div className="mb-6 p-4 bg-zinc-800/30 border border-zinc-700/50 text-zinc-400 rounded-lg text-sm">
-                    Информация о персоне не найдена
+                    <p>Информация о персоне не найдена</p>
+                    {personId && (
+                        <p className="text-xs mt-2 text-zinc-500">ID: {personId}</p>
+                    )}
                 </div>
             </div>
         )
     }
 
     const name = personData.nameRu || personData.nameEn || 'Без имени'
-    const allFilms = personData.films || []
-
-    const uniqueFilms = useMemo(() => {
-        const seen = new Set()
-        return allFilms.filter((film) => {
-            const filmName = (film.nameRu || film.nameEn || film.nameOriginal || '').toLowerCase().trim()
-            if (!filmName || seen.has(filmName)) {
-                return false
-            }
-            seen.add(filmName)
-            return true
-        })
-    }, [allFilms])
 
     return (
         <div className="w-full space-y-8">
@@ -132,14 +149,14 @@ function PersonPage() {
                 </div>
             </div>
 
-            {uniqueFilms.length > 0 && (
+            {uniqueFilms.length > 0 ? (
                 <div className="space-y-6">
                     <h2 className="text-2xl font-light text-zinc-100 flex items-center gap-2">
                         <Film className="w-6 h-6 text-blue-500" />
                         Фильмы ({uniqueFilms.length})
                     </h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                        {uniqueFilms.map((film) => {
+                        {uniqueFilms.map((film, index) => {
                             const filmData = {
                                 kinopoiskId: film.filmId,
                                 filmId: film.filmId,
@@ -152,12 +169,22 @@ function PersonPage() {
                                 year: null
                             }
                             return (
-                                <MovieCard key={film.filmId} movie={filmData} />
+                                <MovieCard key={film.filmId || index} movie={filmData} />
                             )
                         })}
                     </div>
                 </div>
-            )}
+            ) : allFilms.length > 0 ? (
+                <div className="space-y-6">
+                    <h2 className="text-2xl font-light text-zinc-100 flex items-center gap-2">
+                        <Film className="w-6 h-6 text-blue-500" />
+                        Фильмы (после фильтрации: {uniqueFilms.length} из {allFilms.length})
+                    </h2>
+                    <div className="p-4 bg-zinc-800/30 border border-zinc-700/50 rounded-lg text-zinc-400 text-sm">
+                        Все фильмы были отфильтрованы как дубликаты
+                    </div>
+                </div>
+            ) : null}
         </div>
     )
 }
