@@ -1,4 +1,5 @@
 import { useParams } from 'react-router-dom'
+import { useMemo } from 'react'
 import { Loader2, Calendar, Film, Star } from 'lucide-react'
 import { useGetPersonById } from '../api/kinopoisk/hooks'
 import MovieCard from '../components/features/movies/MovieCard'
@@ -42,7 +43,19 @@ function PersonPage() {
     }
 
     const name = personData.nameRu || personData.nameEn || 'Без имени'
-    const films = personData.films || []
+    const allFilms = personData.films || []
+
+    const uniqueFilms = useMemo(() => {
+        const seen = new Set()
+        return allFilms.filter((film) => {
+            const filmName = (film.nameRu || film.nameEn || film.nameOriginal || '').toLowerCase().trim()
+            if (!filmName || seen.has(filmName)) {
+                return false
+            }
+            seen.add(filmName)
+            return true
+        })
+    }, [allFilms])
 
     return (
         <div className="w-full space-y-8">
@@ -119,20 +132,21 @@ function PersonPage() {
                 </div>
             </div>
 
-            {films.length > 0 && (
+            {uniqueFilms.length > 0 && (
                 <div className="space-y-6">
                     <h2 className="text-2xl font-light text-zinc-100 flex items-center gap-2">
                         <Film className="w-6 h-6 text-blue-500" />
-                        Фильмы ({films.length})
+                        Фильмы ({uniqueFilms.length})
                     </h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                        {films.map((film) => {
+                        {uniqueFilms.map((film) => {
                             const filmData = {
                                 kinopoiskId: film.filmId,
                                 filmId: film.filmId,
                                 nameRu: film.nameRu,
                                 nameEn: film.nameEn,
                                 nameOriginal: film.nameOriginal,
+                                posterUrl: `https://st.kp.yandex.net/images/film_big/${film.filmId}.jpg`,
                                 rating: film.rating,
                                 description: film.description,
                                 year: null
