@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'
 import ViewerPage from './pages/ViewerPage'
 import LoginPage from './pages/LoginPage'
 import ProfilePage from './pages/ProfilePage'
+import PersonPage from './pages/PersonPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import { useAuth } from './contexts/AuthContext'
 
@@ -26,6 +27,14 @@ function AppRoutes() {
                 element={
                     <Layout>
                         <ViewerPage />
+                    </Layout>
+                }
+            />
+            <Route
+                path="/person/:personId"
+                element={
+                    <Layout>
+                        <PersonPage />
                     </Layout>
                 }
             />

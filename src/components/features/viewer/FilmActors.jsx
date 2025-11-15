@@ -1,6 +1,9 @@
+import { useNavigate } from 'react-router-dom'
 import { Users, Film } from 'lucide-react'
 
 function FilmActors({ staff }) {
+    const navigate = useNavigate()
+
     if (!staff || staff.length === 0) return null
 
     const actors = staff
@@ -8,6 +11,12 @@ function FilmActors({ staff }) {
         .slice(0, 12)
 
     if (actors.length === 0) return null
+
+    const handleActorClick = (staffId) => {
+        if (staffId) {
+            navigate(`/person/${staffId}`)
+        }
+    }
 
     return (
         <div className="space-y-4">
@@ -19,7 +28,8 @@ function FilmActors({ staff }) {
                 {actors.map((actor) => (
                     <div
                         key={actor.staffId}
-                        className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg overflow-hidden hover:bg-zinc-700/50 transition-all group"
+                        onClick={() => handleActorClick(actor.staffId)}
+                        className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg overflow-hidden hover:bg-zinc-700/50 transition-all group cursor-pointer"
                     >
                         {actor.posterUrl ? (
                             <div className="w-full aspect-[2/3] bg-zinc-900 overflow-hidden">

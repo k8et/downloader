@@ -224,3 +224,28 @@ export const getSimilarFilms = async (filmId) => {
     }
 }
 
+export const getPersonById = async (personId) => {
+    if (!API_KEY) {
+        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
+    }
+
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/api/v1/staff/${personId}`,
+            {
+                headers: getHeaders()
+            }
+        )
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+        }
+
+        return await response.json()
+    } catch (error) {
+        console.error('Error fetching person:', error)
+        throw error
+    }
+}
+
