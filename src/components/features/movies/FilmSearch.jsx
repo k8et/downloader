@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { Search, Film, Star, Calendar, X } from 'lucide-react'
 import { useSearchFilms } from '../../../api/kinopoisk/hooks'
@@ -9,7 +8,6 @@ function FilmSearch() {
     const [query, setQuery] = useState('')
     const [isOpen, setIsOpen] = useState(false)
     const [focusedIndex, setFocusedIndex] = useState(-1)
-    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
     const debouncedQuery = useDebounce(query, 300)
     const navigate = useNavigate()
     const containerRef = useRef(null)
@@ -26,10 +24,7 @@ function FilmSearch() {
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            const isClickInsideContainer = containerRef.current?.contains(event.target)
-            const isClickInsideDropdown = dropdownRef.current?.contains(event.target)
-
-            if (!isClickInsideContainer && !isClickInsideDropdown) {
+            if (containerRef.current && !containerRef.current.contains(event.target)) {
                 setIsOpen(false)
                 setFocusedIndex(-1)
             }
@@ -57,30 +52,6 @@ function FilmSearch() {
             setIsOpen(true)
         }
     }, [debouncedQuery])
-
-    useEffect(() => {
-        const updatePosition = () => {
-            if (inputRef.current && isOpen) {
-                const rect = inputRef.current.getBoundingClientRect()
-                setDropdownPosition({
-                    top: rect.bottom + window.scrollY + 8,
-                    left: rect.left + window.scrollX,
-                    width: rect.width
-                })
-            }
-        }
-
-        if (isOpen) {
-            updatePosition()
-            window.addEventListener('scroll', updatePosition, true)
-            window.addEventListener('resize', updatePosition)
-
-            return () => {
-                window.removeEventListener('scroll', updatePosition, true)
-                window.removeEventListener('resize', updatePosition)
-            }
-        }
-    }, [isOpen, query, debouncedQuery])
 
     const handleInputChange = (e) => {
         setQuery(e.target.value)
@@ -129,16 +100,41 @@ function FilmSearch() {
         return null
     }
 
-    const dropdownContent = showDropdown ? (
-        <div
-            ref={dropdownRef}
-            className="fixed bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-[9999] max-h-96 overflow-y-auto"
-            style={{
-                top: `${dropdownPosition.top}px`,
-                left: `${dropdownPosition.left}px`,
-                width: `${dropdownPosition.width}px`
-            }}
-        >
+    return (
+        <div ref={containerRef} className="relative w-full md:max-w-md">
+            <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <Search className="w-5 h-5 text-zinc-500" />
+                </div>
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={query}
+                    onChange={handleInputChange}
+                    onFocus={handleInputFocus}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Поиск..."
+                    className="w-full pl-10 pr-10 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 transition-all focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+                {query && (
+                    <button
+                        onClick={() => {
+                            setQuery('')
+                            setIsOpen(false)
+                            inputRef.current?.focus()
+                        }}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-zinc-700 transition-colors"
+                    >
+                        <X className="w-4 h-4 text-zinc-400 hover:text-zinc-200" />
+                    </button>
+                )}
+            </div>
+
+            {showDropdown && (
+                <div
+                    ref={dropdownRef}
+                    className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto"
+                >
             {isLoading ? (
                 <div className="p-4 text-center text-zinc-400 text-sm">
                     Поиск...
@@ -213,40 +209,8 @@ function FilmSearch() {
                     Ничего не найдено
                 </div>
             ) : null}
-        </div>
-    ) : null
-
-    return (
-        <div ref={containerRef} className="relative w-full md:max-w-md">
-            <div className="relative">
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <Search className="w-5 h-5 text-zinc-500" />
                 </div>
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={query}
-                    onChange={handleInputChange}
-                    onFocus={handleInputFocus}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Поиск..."
-                    className="w-full pl-10 pr-10 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-100 placeholder-zinc-500 transition-all focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-                {query && (
-                    <button
-                        onClick={() => {
-                            setQuery('')
-                            setIsOpen(false)
-                            inputRef.current?.focus()
-                        }}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded hover:bg-zinc-700 transition-colors"
-                    >
-                        <X className="w-4 h-4 text-zinc-400 hover:text-zinc-200" />
-                    </button>
-                )}
-            </div>
-
-            {typeof document !== 'undefined' && createPortal(dropdownContent, document.body)}
+            )}
         </div>
     )
 }

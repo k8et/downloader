@@ -1,7 +1,15 @@
-import { Star, Calendar, Clock, Film as FilmIcon } from 'lucide-react'
+import { Star, Calendar, Clock, Film as FilmIcon, Heart } from 'lucide-react'
+import { useAuth } from '../../../contexts/AuthContext'
+import { useIsFavorite, useAddToFavorites, useRemoveFromFavorites } from '../../../api/supabase/hooks'
 
 function FilmDescription({ film }) {
     if (!film) return null
+
+    const { user } = useAuth()
+    const kinopoiskId = film.kinopoiskId || film.filmId
+    const { data: isFavoriteData } = useIsFavorite(user?.id, kinopoiskId ? parseInt(kinopoiskId) : null)
+    const addToFavoritesMutation = useAddToFavorites()
+    const removeFromFavoritesMutation = useRemoveFromFavorites()
 
     const name = film.nameRu || film.nameEn || film.nameOriginal || 'Без названия'
     const description = film.description || film.shortDescription || ''
@@ -10,13 +18,51 @@ function FilmDescription({ film }) {
     const filmLength = film.filmLength || null
     const genres = film.genres || []
     const countries = film.countries || []
+    const isFavorite = isFavoriteData || false
+
+    const handleFavoriteToggle = async () => {
+        if (!user || !kinopoiskId) return
+
+        const filmKinopoiskId = parseInt(kinopoiskId)
+
+        try {
+            if (isFavorite) {
+                await removeFromFavoritesMutation.mutateAsync({
+                    userId: user.id,
+                    kinopoiskId: filmKinopoiskId
+                })
+            } else {
+                await addToFavoritesMutation.mutateAsync({
+                    userId: user.id,
+                    filmData: film
+                })
+            }
+        } catch (error) {
+            console.error('Error toggling favorite:', error)
+        }
+    }
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-zinc-100 mb-4">
-                    {name}
-                </h1>
+                <div className="flex items-start justify-between gap-4 mb-4">
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-zinc-100 flex-1">
+                        {name}
+                    </h1>
+                    {user && (
+                        <button
+                            onClick={handleFavoriteToggle}
+                            disabled={addToFavoritesMutation.isPending || removeFromFavoritesMutation.isPending}
+                            className={`flex-shrink-0 p-3 rounded-lg transition-all ${isFavorite
+                                ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/50'
+                                : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50 border border-zinc-700/50 hover:text-zinc-300'
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+                        >
+                            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+                        </button>
+                    )}
+                </div>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-400 mb-4">
                     {rating && (
                         <div className="flex items-center gap-1.5">
