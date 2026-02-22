@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { getFilmStaff } from '../actions'
+import { getFilmById } from '../actions'
 
 export const useGetFilmStaff = (filmId, options = {}) => {
     return useQuery({
-        queryKey: ['filmStaff', filmId],
-        queryFn: () => getFilmStaff(filmId),
+        queryKey: ['film', filmId],
+        queryFn: () => getFilmById(filmId),
+        select: (data) => data?.staff,
         enabled: !!filmId,
         ...options
     })

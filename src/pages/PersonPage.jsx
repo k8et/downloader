@@ -162,11 +162,13 @@ function PersonPage() {
                                 filmId: film.filmId,
                                 nameRu: film.nameRu,
                                 nameEn: film.nameEn,
-                                nameOriginal: film.nameOriginal,
-                                posterUrl: `https://st.kp.yandex.net/images/film_big/${film.filmId}.jpg`,
+                                nameOriginal: film.nameOriginal || film.nameEn,
+                                posterUrl: film.posterUrl || null,
+                                posterUrlPreview: film.posterUrlPreview || film.posterUrl,
                                 rating: film.rating,
+                                ratingKinopoisk: film.rating,
                                 description: film.description,
-                                year: null
+                                year: film.year
                             }
                             return (
                                 <MovieCard key={film.filmId || index} movie={filmData} />

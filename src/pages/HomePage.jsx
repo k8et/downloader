@@ -1,134 +1,95 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Search, Film } from 'lucide-react'
-import { useGetPopularFilms, useSearchFilms, useGetFilmsByFilter, useGetFilters } from '../api/kinopoisk/hooks'
+import { useGetPopularFilms, useGetFilmsByFilter } from '../api/kinopoisk/hooks'
 import { useDebounce } from '../hooks/useDebounce'
+import { LIST_OPTIONS } from '../api/kinopoisk/actions'
 import MovieCard from '../components/features/movies/MovieCard'
 import FilmFilters from '../components/features/movies/FilmFilters'
-import ContentTabs from '../components/features/movies/ContentTabs'
+import ListTabs from '../components/features/movies/ListTabs'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 
 function HomePage() {
     const [searchParams, setSearchParams] = useSearchParams()
     const isUpdatingURLRef = useRef(false)
-    const { data: filtersData } = useGetFilters()
 
-    const getFiltersFromURL = () => {
-        const filters = {}
+    const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '')
+    const [filters, setFilters] = useState(() => {
+        const f = {}
         const type = searchParams.get('type')
-        const order = searchParams.get('order')
         const genres = searchParams.get('genres')
         const countries = searchParams.get('countries')
         const yearFrom = searchParams.get('yearFrom')
         const yearTo = searchParams.get('yearTo')
         const ratingFrom = searchParams.get('ratingFrom')
         const ratingTo = searchParams.get('ratingTo')
-        const tab = searchParams.get('tab')
+        const ageRating = searchParams.get('ageRating')
+        const sort = searchParams.get('sort')
+        const list = searchParams.get('list')
+        if (type) f.typeNumber = type
+        if (genres) f.genres = genres
+        if (countries) f.countries = countries
+        if (list) f.lists = list
+        if (yearFrom) f.yearFrom = parseInt(yearFrom)
+        if (yearTo) f.yearTo = parseInt(yearTo)
+        if (ratingFrom) f.ratingFrom = parseFloat(ratingFrom)
+        if (ratingTo) f.ratingTo = parseFloat(ratingTo)
+        if (ageRating) f.ageRating = ageRating
+        if (sort) f.sort = sort
+        return f
+    })
 
-        if (type) filters.type = type
-        if (order) filters.order = order
-        if (genres) filters.genres = parseInt(genres)
-        if (countries) filters.countries = parseInt(countries)
-        if (yearFrom) filters.yearFrom = parseInt(yearFrom)
-        if (yearTo) filters.yearTo = parseInt(yearTo)
-        if (ratingFrom) filters.ratingFrom = parseFloat(ratingFrom)
-        if (ratingTo) filters.ratingTo = parseFloat(ratingTo)
-        if (tab) filters.tab = tab
-
-        return filters
-    }
-
-    const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '')
-    const [filters, setFilters] = useState(() => getFiltersFromURL())
-    const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'all')
     const debouncedSearchQuery = useDebounce(searchQuery.trim(), 500)
-
-    const genres = filtersData?.genres || []
-    const animeGenreId = useMemo(() => {
-        const animeGenre = genres.find(g =>
-            g.genre?.toLowerCase() === 'аниме' ||
-            g.genre?.toLowerCase() === 'anime' ||
-            g.genre?.toLowerCase() === 'мультфильм'
-        )
-        return animeGenre?.id
-    }, [genres])
 
     useEffect(() => {
         if (isUpdatingURLRef.current) {
             isUpdatingURLRef.current = false
             return
         }
-
-        const urlFilters = getFiltersFromURL()
-        const urlSearch = searchParams.get('search') || ''
-        const urlTab = searchParams.get('tab') || 'all'
-
-        setFilters(urlFilters)
-        setSearchQuery(urlSearch)
-        setActiveTab(urlTab)
+        setSearchQuery(searchParams.get('search') || '')
+        const f = {}
+        const type = searchParams.get('type')
+        const genres = searchParams.get('genres')
+        const countries = searchParams.get('countries')
+        const yearFrom = searchParams.get('yearFrom')
+        const yearTo = searchParams.get('yearTo')
+        const ratingFrom = searchParams.get('ratingFrom')
+        const ratingTo = searchParams.get('ratingTo')
+        const ageRating = searchParams.get('ageRating')
+        const sort = searchParams.get('sort')
+        const list = searchParams.get('list')
+        if (type) f.typeNumber = type
+        if (genres) f.genres = genres
+        if (countries) f.countries = countries
+        if (list) f.lists = list
+        if (yearFrom) f.yearFrom = parseInt(yearFrom)
+        if (yearTo) f.yearTo = parseInt(yearTo)
+        if (ratingFrom) f.ratingFrom = parseFloat(ratingFrom)
+        if (ratingTo) f.ratingTo = parseFloat(ratingTo)
+        if (ageRating) f.ageRating = ageRating
+        if (sort) f.sort = sort
+        setFilters(f)
     }, [searchParams])
 
-    const handleTabChange = (tab) => {
-        setActiveTab(tab)
-        const newFilters = { ...filters }
-
-        if (tab === 'all') {
-            delete newFilters.type
-            delete newFilters.genres
-            delete newFilters.tab
-        } else if (tab === 'films') {
-            newFilters.type = 'FILM'
-            delete newFilters.genres
-            newFilters.tab = 'films'
-        } else if (tab === 'series') {
-            newFilters.type = 'TV_SERIES'
-            delete newFilters.genres
-            newFilters.tab = 'series'
-        } else if (tab === 'anime') {
-            if (animeGenreId) {
-                newFilters.genres = animeGenreId
-            }
-            delete newFilters.type
-            newFilters.tab = 'anime'
-        }
-
-        setFilters(newFilters)
+    const hasActiveFilters = Object.keys(filters).filter(k => k !== 'lists').length > 0
+    const activeList = filters.lists || ''
+    const filterParams = {
+        ...filters,
+        query: debouncedSearchQuery || undefined
     }
-
-    const hasActiveFilters = useMemo(() => {
-        return Object.values(filters).some(value => {
-            return value !== undefined && value !== null && value !== ''
-        })
-    }, [filters])
-
-    const shouldUseFilters = hasActiveFilters
-    const shouldUseSearch = !!debouncedSearchQuery && !hasActiveFilters
-    const shouldUsePopular = !hasActiveFilters && !debouncedSearchQuery
+    const shouldUseFilters = hasActiveFilters || !!debouncedSearchQuery || !!activeList
+    const shouldUsePopular = !shouldUseFilters
 
     const popularMoviesQuery = useGetPopularFilms({
         enabled: !!shouldUsePopular
     })
 
-    const searchMoviesQuery = useSearchFilms(debouncedSearchQuery, {
-        enabled: !!shouldUseSearch
+    const filtersQuery = useGetFilmsByFilter(filterParams, {
+        enabled: !!shouldUseFilters
     })
 
-    const filtersQuery = useGetFilmsByFilter(
-        {
-            ...filters,
-            keyword: debouncedSearchQuery || undefined
-        },
-        {
-            enabled: !!shouldUseFilters
-        }
-    )
-
-    const activeQuery = shouldUseFilters
-        ? filtersQuery
-        : shouldUseSearch
-            ? searchMoviesQuery
-            : popularMoviesQuery
+    const activeQuery = shouldUseFilters ? filtersQuery : popularMoviesQuery
 
     const movies = activeQuery.data?.pages.flatMap(page => page.docs || page.items || page.films || []) || []
     const loading = activeQuery.isLoading || activeQuery.isFetchingNextPage
@@ -148,39 +109,50 @@ function HomePage() {
     const updateURL = (newFilters, newSearch) => {
         isUpdatingURLRef.current = true
         const params = new URLSearchParams()
-
-        if (newSearch && newSearch.trim()) {
-            params.set('search', newSearch.trim())
-        }
-
-        if (newFilters.tab) {
-            params.set('tab', newFilters.tab)
-        }
-
-        Object.entries(newFilters).forEach(([key, value]) => {
-            if (key === 'tab') return
-            if (value !== undefined && value !== null && value !== '') {
-                params.set(key, String(value))
-            }
-        })
-
+        if (newSearch?.trim()) params.set('search', newSearch.trim())
+        if (newFilters.typeNumber) params.set('type', newFilters.typeNumber)
+        if (newFilters.genres) params.set('genres', newFilters.genres)
+        if (newFilters.countries) params.set('countries', newFilters.countries)
+        if (newFilters.yearFrom) params.set('yearFrom', String(newFilters.yearFrom))
+        if (newFilters.yearTo) params.set('yearTo', String(newFilters.yearTo))
+        if (newFilters.ratingFrom !== undefined) params.set('ratingFrom', String(newFilters.ratingFrom))
+        if (newFilters.ratingTo !== undefined) params.set('ratingTo', String(newFilters.ratingTo))
+        if (newFilters.ageRating) params.set('ageRating', newFilters.ageRating)
+        if (newFilters.sort) params.set('sort', newFilters.sort)
+        if (newFilters.lists) params.set('list', newFilters.lists)
         setSearchParams(params, { replace: true })
     }
 
     useEffect(() => {
         const currentSearch = searchParams.get('search') || ''
-        const currentFilters = getFiltersFromURL()
+        const urlFilters = {}
+        const type = searchParams.get('type')
+        const genres = searchParams.get('genres')
+        const countries = searchParams.get('countries')
+        const yearFrom = searchParams.get('yearFrom')
+        const yearTo = searchParams.get('yearTo')
+        const ratingFrom = searchParams.get('ratingFrom')
+        const ratingTo = searchParams.get('ratingTo')
+        const ageRating = searchParams.get('ageRating')
+        const sort = searchParams.get('sort')
+        if (type) urlFilters.typeNumber = type
+        if (genres) urlFilters.genres = genres
+        if (countries) urlFilters.countries = countries
+        if (yearFrom) urlFilters.yearFrom = parseInt(yearFrom)
+        if (yearTo) urlFilters.yearTo = parseInt(yearTo)
+        if (ratingFrom) urlFilters.ratingFrom = parseFloat(ratingFrom)
+        if (ratingTo) urlFilters.ratingTo = parseFloat(ratingTo)
+        if (ageRating) urlFilters.ageRating = ageRating
+        if (sort) urlFilters.sort = sort
+        const list = searchParams.get('list')
+        if (list) urlFilters.lists = list
 
         const searchMatch = (debouncedSearchQuery || '') === (currentSearch || '')
-        const filtersMatch = JSON.stringify(filters) === JSON.stringify(currentFilters)
+        const filtersMatch = JSON.stringify(filters) === JSON.stringify(urlFilters)
 
         if (!searchMatch || !filtersMatch) {
-            if (debouncedSearchQuery || Object.keys(filters).length > 0) {
-                updateURL(filters, debouncedSearchQuery)
-            } else {
-                isUpdatingURLRef.current = true
-                setSearchParams({}, { replace: true })
-            }
+            isUpdatingURLRef.current = true
+            updateURL(filters, debouncedSearchQuery)
         }
     }, [debouncedSearchQuery, filters])
 
@@ -193,10 +165,13 @@ function HomePage() {
     }
 
     const handleResetFilters = () => {
-        const emptyFilters = {}
-        setFilters(emptyFilters)
+        setFilters({})
         setSearchQuery('')
         setSearchParams({}, { replace: true })
+    }
+
+    const handleListChange = (listValue) => {
+        setFilters(prev => ({ ...prev, lists: listValue }))
     }
 
     return (
@@ -207,11 +182,6 @@ function HomePage() {
                 </h1>
                 <p className="text-zinc-400 text-sm">Найдите и смотрите любимые фильмы</p>
             </div>
-
-            <ContentTabs
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-            />
 
             <form onSubmit={handleSearch} className="mb-6">
                 <div className="flex flex-col gap-3 md:flex-row md:gap-3">
@@ -235,6 +205,12 @@ function HomePage() {
                 </div>
             </form>
 
+            <ListTabs
+                lists={LIST_OPTIONS}
+                activeList={activeList}
+                onListChange={handleListChange}
+            />
+
             <div className="mb-6">
                 <FilmFilters
                     filters={filters}
@@ -252,7 +228,7 @@ function HomePage() {
             {!loading && movies.length === 0 && !error && (
                 <div className="text-center py-16 text-zinc-500">
                     <Film className="w-20 h-20 mx-auto mb-4 text-zinc-700" />
-                    <p className="text-zinc-400">Начните поиск фильмов</p>
+                    <p className="text-zinc-400">{shouldUseFilters ? 'Ничего не найдено' : 'Популярные фильмы загрузятся здесь'}</p>
                 </div>
             )}
 
@@ -293,4 +269,3 @@ function HomePage() {
 }
 
 export default HomePage
-

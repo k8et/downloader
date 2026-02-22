@@ -5,6 +5,7 @@ export const useGetFilmById = (id, options = {}) => {
     return useQuery({
         queryKey: ['film', id],
         queryFn: () => getFilmById(id),
+        select: (data) => data?.film,
         enabled: !!id,
         ...options
     })

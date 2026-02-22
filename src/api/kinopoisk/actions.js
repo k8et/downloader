@@ -1,25 +1,64 @@
-const API_BASE_URL = 'https://kinopoiskapiunofficial.tech'
-const API_KEY = import.meta.env.VITE_KINOPOISK_API_KEY || ''
+const API_BASE_URL = 'https://api.poiskkino.dev'
+const API_TOKEN = import.meta.env.VITE_POISKKINO_TOKEN || ''
 
-const getHeaders = () => {
-    const headers = {}
-    if (API_KEY) {
-        headers['X-API-KEY'] = API_KEY
+const mapFilmFromList = (item) => {
+    const rating = item.rating || {}
+    const poster = item.poster || {}
+    return {
+        kinopoiskId: item.id,
+        filmId: item.id,
+        nameRu: item.name || (item.names?.find(n => n.language === 'RU')?.name),
+        nameEn: item.alternativeName || (item.names?.find(n => !n.language)?.name),
+        nameOriginal: item.alternativeName,
+        posterUrl: poster.url,
+        posterUrlPreview: poster.previewUrl || poster.url,
+        ratingKinopoisk: rating.kp || null,
+        ratingImdb: rating.imdb || null,
+        rating: rating.kp || rating.imdb,
+        year: item.year,
+        description: item.description,
+        shortDescription: item.shortDescription,
+        filmLength: item.movieLength,
+        genres: (item.genres || []).map(g => ({ genre: g.name })),
+        countries: (item.countries || []).map(c => ({ country: c.name }))
     }
-    return headers
 }
 
+const mapPerson = (p) => {
+    const enProfession = (p.enProfession || '').toLowerCase()
+    let professionKey = 'ACTOR'
+    if (enProfession === 'director') professionKey = 'DIRECTOR'
+    return {
+        staffId: p.id,
+        nameRu: p.name,
+        nameEn: p.enName,
+        posterUrl: p.photo,
+        professionKey,
+        professionText: p.profession
+    }
+}
+
+const mapSimilarFilm = (item) => ({
+    ...mapFilmFromList(item),
+    kinopoiskId: item.id,
+    filmId: item.id
+})
+
 export const searchFilms = async (query, page = 1) => {
-    if (!API_KEY) {
-        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
+    if (!API_TOKEN) {
+        throw new Error('API ключ не настроен. Создайте файл .env с VITE_POISKKINO_TOKEN')
     }
 
     try {
+        const params = new URLSearchParams({
+            query: query.trim(),
+            page: String(page),
+            limit: '20'
+        })
+        params.set('token', API_TOKEN)
+
         const response = await fetch(
-            `${API_BASE_URL}/api/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(query)}&page=${page}`,
-            {
-                headers: getHeaders()
-            }
+            `${API_BASE_URL}/v1.4/movie/search?${params}`
         )
 
         if (!response.ok) {
@@ -29,10 +68,10 @@ export const searchFilms = async (query, page = 1) => {
 
         const data = await response.json()
         return {
-            docs: data.films || [],
-            page: page,
-            pages: data.pagesCount || 1,
-            total: data.searchFilmsCountResult || 0
+            docs: (data.docs || []).map(mapFilmFromList),
+            page: data.page || page,
+            pages: data.pages || 1,
+            total: data.total || 0
         }
     } catch (error) {
         console.error('Error searching films:', error)
@@ -40,42 +79,96 @@ export const searchFilms = async (query, page = 1) => {
     }
 }
 
-export const getFilmById = async (id) => {
-    if (!API_KEY) {
-        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
+export const LIST_OPTIONS = [
+    { value: '', label: 'По рейтингу' },
+    { value: 'popular', label: 'Популярное' },
+    { value: 'popular-films', label: 'Популярные фильмы' },
+    { value: 'top250', label: 'Топ 250' },
+    { value: 'top500', label: 'Топ 500' },
+    { value: 'box-total', label: 'Кассовые сборы' },
+    { value: 'box-usa-all-time', label: 'Кассовые сборы США' },
+    { value: 'oscar-visual-effects', label: 'Оскар: визуальные эффекты' }
+]
+
+export const SORT_OPTIONS = [
+    { value: 'rating.kp:-1', label: 'Рейтинг КП ↓' },
+    { value: 'rating.imdb:-1', label: 'Рейтинг IMDb ↓' },
+    { value: 'votes.kp:-1', label: 'Голоса КП ↓' },
+    { value: 'year:-1', label: 'Год (сначала новые)' },
+    { value: 'year:1', label: 'Год (сначала старые)' },
+    { value: 'movieLength:1', label: 'Длина (короткие)' },
+    { value: 'movieLength:-1', label: 'Длина (длинные)' }
+]
+
+export const getFilmsByFilter = async (filters = {}, page = 1) => {
+    if (!API_TOKEN) {
+        throw new Error('API ключ не настроен. Создайте файл .env с VITE_POISKKINO_TOKEN')
     }
 
     try {
-        const response = await fetch(
-            `${API_BASE_URL}/api/v2.2/films/${id}`,
-            {
-                headers: getHeaders()
-            }
-        )
+        const params = new URLSearchParams({
+            page: String(page),
+            limit: '20'
+        })
+        params.set('token', API_TOKEN)
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+        if (filters.lists) {
+            params.set('lists', filters.lists)
+        }
+        if (filters.typeNumber) {
+            params.set('typeNumber', String(filters.typeNumber))
+        }
+        if (filters.genres) {
+            params.set('genres.name', filters.genres)
+        }
+        if (filters.countries) {
+            params.set('countries.name', filters.countries)
+        }
+        if (filters.yearFrom && filters.yearTo) {
+            params.set('year', `${filters.yearFrom}-${filters.yearTo}`)
+        } else if (filters.year) {
+            params.set('year', String(filters.year))
+        }
+        if (filters.ratingFrom !== undefined || filters.ratingTo !== undefined) {
+            const from = filters.ratingFrom ?? 0
+            const to = filters.ratingTo ?? 10
+            params.set('rating.kp', `${from}-${to}`)
+        }
+        if (filters.ageRating) {
+            params.set('ageRating', String(filters.ageRating))
+        }
+        if (filters.sort) {
+            const [sortField, sortType] = filters.sort.split(':')
+            if (sortField) {
+                params.set('sortField', sortField)
+                params.set('sortType', sortType || '-1')
+            }
+        }
+        if (filters.query?.trim()) {
+            const searchParams = new URLSearchParams({
+                query: filters.query.trim(),
+                page: String(page),
+                limit: '20'
+            })
+            searchParams.set('token', API_TOKEN)
+            const response = await fetch(
+                `${API_BASE_URL}/v1.4/movie/search?${searchParams}`
+            )
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+            }
+            const data = await response.json()
+            return {
+                docs: (data.docs || []).map(mapFilmFromList),
+                page: data.page || page,
+                pages: data.pages || 1,
+                total: data.total || 0
+            }
         }
 
-        return await response.json()
-    } catch (error) {
-        console.error('Error fetching film:', error)
-        throw error
-    }
-}
-
-export const getPopularFilms = async (page = 1) => {
-    if (!API_KEY) {
-        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
-    }
-
-    try {
         const response = await fetch(
-            `${API_BASE_URL}/api/v2.2/films/collections?type=TOP_POPULAR_ALL&page=${page}`,
-            {
-                headers: getHeaders()
-            }
+            `${API_BASE_URL}/v1.4/movie?${params}`
         )
 
         if (!response.ok) {
@@ -85,9 +178,59 @@ export const getPopularFilms = async (page = 1) => {
 
         const data = await response.json()
         return {
-            docs: data.items || [],
-            page: page,
-            pages: data.totalPages || 1,
+            docs: (data.docs || []).map(mapFilmFromList),
+            page: data.page || page,
+            pages: data.pages || 1,
+            total: data.total || 0
+        }
+    } catch (error) {
+        console.error('Error fetching films by filter:', error)
+        throw error
+    }
+}
+
+export const GENRES = [
+    'драма', 'комедия', 'фантастика', 'боевик', 'триллер', 'ужасы', 'мелодрама',
+    'детектив', 'документальный', 'мультфильм', 'криминал', 'приключения', 'семейный',
+    'биография', 'военный', 'короткометражка', 'музыка', 'концерт', 'фэнтези', 'детский',
+    'история', 'спорт', 'аниме', 'вестерн', 'мюзикл'
+]
+
+export const COUNTRIES = [
+    'США', 'Россия', 'Франция', 'Великобритания', 'Германия', 'Китай', 'Япония',
+    'Корея Южная', 'Индия', 'Испания', 'Италия', 'Канада', 'Австралия',
+    'СССР', 'Украина', 'Бразилия', 'Мексика', 'Аргентина', 'Польша', 'Швеция',
+    'Нидерланды', 'Бельгия', 'Турция', 'Гонконг', 'Таиланд', 'Финляндия', 'Норвегия'
+]
+
+export const getPopularFilms = async (page = 1) => {
+    if (!API_TOKEN) {
+        throw new Error('API ключ не настроен. Создайте файл .env с VITE_POISKKINO_TOKEN')
+    }
+
+    try {
+        const params = new URLSearchParams({
+            sortField: 'rating.kp',
+            sortType: '-1',
+            page: String(page),
+            limit: '20'
+        })
+        params.set('token', API_TOKEN)
+
+        const response = await fetch(
+            `${API_BASE_URL}/v1.4/movie?${params}`
+        )
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+        return {
+            docs: (data.docs || []).map(mapFilmFromList),
+            page: data.page || page,
+            pages: data.pages || 1,
             total: data.total || 0
         }
     } catch (error) {
@@ -96,38 +239,15 @@ export const getPopularFilms = async (page = 1) => {
     }
 }
 
-export const getFilmsByFilter = async (filters = {}, page = 1) => {
-    if (!API_KEY) {
-        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
+export const getFilmById = async (id) => {
+    if (!API_TOKEN) {
+        throw new Error('API ключ не настроен. Создайте файл .env с VITE_POISKKINO_TOKEN')
     }
 
     try {
-        const processedFilters = {}
-
-        Object.entries(filters).forEach(([key, value]) => {
-            if (value === undefined || value === null || value === '') return
-
-            if (key === 'genres' || key === 'countries') {
-                if (Array.isArray(value) && value.length > 0) {
-                    processedFilters[key] = value[0]
-                } else if (!Array.isArray(value)) {
-                    processedFilters[key] = value
-                }
-            } else {
-                processedFilters[key] = value
-            }
-        })
-
-        const params = new URLSearchParams({
-            page: page.toString(),
-            ...processedFilters
-        })
-
+        const params = new URLSearchParams({ token: API_TOKEN })
         const response = await fetch(
-            `${API_BASE_URL}/api/v2.2/films?${params}`,
-            {
-                headers: getHeaders()
-            }
+            `${API_BASE_URL}/v1.4/movie/${id}?${params}`
         )
 
         if (!response.ok) {
@@ -136,105 +256,51 @@ export const getFilmsByFilter = async (filters = {}, page = 1) => {
         }
 
         const data = await response.json()
-        return {
-            docs: data.items || data.films || [],
-            page: page,
-            pages: data.totalPages || data.pagesCount || 1,
-            total: data.total || data.searchFilmsCountResult || 0
-        }
-    } catch (error) {
-        console.error('Error fetching films by filter:', error)
-        throw error
-    }
-}
+        const rating = data.rating || {}
+        const poster = data.poster || {}
 
-export const getFilters = async () => {
-    if (!API_KEY) {
-        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
-    }
-
-    try {
-        const response = await fetch(
-            `${API_BASE_URL}/api/v2.2/films/filters`,
-            {
-                headers: getHeaders()
-            }
-        )
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+        const film = {
+            kinopoiskId: data.id,
+            filmId: data.id,
+            nameRu: data.name || (data.names?.find(n => n.language === 'RU')?.name),
+            nameEn: data.alternativeName || (data.names?.find(n => !n.language)?.name),
+            nameOriginal: data.alternativeName,
+            posterUrl: poster.url,
+            posterUrlPreview: poster.previewUrl || poster.url,
+            ratingKinopoisk: rating.kp ?? null,
+            ratingImdb: rating.imdb ?? null,
+            rating: rating.kp || rating.imdb,
+            year: data.year,
+            description: data.description,
+            shortDescription: data.shortDescription,
+            filmLength: data.movieLength,
+            genres: (data.genres || []).map(g => ({ genre: g.name })),
+            countries: (data.countries || []).map(c => ({ country: c.name }))
         }
 
-        return await response.json()
+        const persons = data.persons || []
+        const staff = persons
+            .filter(p => ['actor', 'director'].includes((p.enProfession || '').toLowerCase()))
+            .map(mapPerson)
+
+        const similar = (data.similarMovies || []).map(mapSimilarFilm)
+
+        return { film, staff, similar }
     } catch (error) {
-        console.error('Error fetching filters:', error)
-        throw error
-    }
-}
-
-export const getFilmStaff = async (filmId) => {
-    if (!API_KEY) {
-        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
-    }
-
-    try {
-        const response = await fetch(
-            `${API_BASE_URL}/api/v1/staff?filmId=${filmId}`,
-            {
-                headers: getHeaders()
-            }
-        )
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
-        }
-
-        return await response.json()
-    } catch (error) {
-        console.error('Error fetching film staff:', error)
-        throw error
-    }
-}
-
-export const getSimilarFilms = async (filmId) => {
-    if (!API_KEY) {
-        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
-    }
-
-    try {
-        const response = await fetch(
-            `${API_BASE_URL}/api/v2.2/films/${filmId}/similars`,
-            {
-                headers: getHeaders()
-            }
-        )
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
-        return data.items || []
-    } catch (error) {
-        console.error('Error fetching similar films:', error)
+        console.error('Error fetching film:', error)
         throw error
     }
 }
 
 export const getPersonById = async (personId) => {
-    if (!API_KEY) {
-        throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
+    if (!API_TOKEN) {
+        throw new Error('API ключ не настроен. Создайте файл .env с VITE_POISKKINO_TOKEN')
     }
 
     try {
+        const params = new URLSearchParams({ token: API_TOKEN })
         const response = await fetch(
-            `${API_BASE_URL}/api/v1/staff/${personId}`,
-            {
-                headers: getHeaders()
-            }
+            `${API_BASE_URL}/v1.4/person/${personId}?${params}`
         )
 
         if (!response.ok) {
@@ -242,10 +308,45 @@ export const getPersonById = async (personId) => {
             throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
         }
 
-        return await response.json()
+        const data = await response.json()
+        const birthPlace = data.birthPlace
+        const birthPlaceStr = Array.isArray(birthPlace)
+            ? birthPlace.map(p => p.value || p.name).filter(Boolean).join(', ')
+            : birthPlace?.value || birthPlace?.name || ''
+
+        const facts = (data.facts || []).map(f => (typeof f === 'string' ? f : f.value || f.text))
+
+        const profession = Array.isArray(data.profession)
+            ? data.profession.map(p => p.value || p).join(', ')
+            : data.profession?.value || data.profession || ''
+
+        const birthday = data.birthday
+            ? new Date(data.birthday).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+            : null
+
+        const films = (data.movies || []).map(m => ({
+            filmId: m.id,
+            nameRu: m.name,
+            nameEn: m.alternativeName,
+            nameOriginal: m.alternativeName,
+            rating: m.rating,
+            description: m.description
+        }))
+
+        return {
+            nameRu: data.name,
+            nameEn: data.enName,
+            posterUrl: data.photo,
+            profession,
+            birthday,
+            age: data.age,
+            birthplace: birthPlaceStr,
+            growth: data.growth,
+            facts,
+            films
+        }
     } catch (error) {
         console.error('Error fetching person:', error)
         throw error
     }
 }
-

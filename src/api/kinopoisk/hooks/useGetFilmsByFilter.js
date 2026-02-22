@@ -11,4 +11,3 @@ export const useGetFilmsByFilter = (filters = {}, options = {}) => {
         ...options
     })
 }
-

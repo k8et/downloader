@@ -1,277 +1,178 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Filter, X, ChevronDown, ChevronUp, Check } from 'lucide-react'
-import { useGetFilters } from '../../../api/kinopoisk/hooks'
-import Button from '../../ui/Button'
-import Input from '../../ui/Input'
+import { useState, useEffect } from 'react'
+import { Filter, X } from 'lucide-react'
+import { GENRES, COUNTRIES, SORT_OPTIONS } from '../../../api/kinopoisk/actions'
 import Select from '../../ui/Select'
+import Button from '../../ui/Button'
 
-const FILM_TYPES = [
-    { value: 'ALL', label: 'Все' },
-    { value: 'FILM', label: 'Фильмы' },
-    { value: 'TV_SERIES', label: 'Сериалы' },
-    { value: 'MINI_SERIES', label: 'Мини-сериалы' },
-    { value: 'TV_SHOW', label: 'ТВ-шоу' }
+const TYPE_OPTIONS = [
+    { value: '', label: 'Всё' },
+    { value: '1', label: 'Фильмы' },
+    { value: '2', label: 'Сериалы' }
 ]
 
-const SORT_OPTIONS = [
-    { value: 'RATING', label: 'По рейтингу' },
-    { value: 'NUM_VOTE', label: 'По количеству оценок' },
-    { value: 'YEAR', label: 'По году' }
+const AGE_OPTIONS = [
+    { value: '', label: 'Любой' },
+    { value: '0', label: '0+' },
+    { value: '6', label: '6+' },
+    { value: '12', label: '12+' },
+    { value: '16', label: '16+' },
+    { value: '18', label: '18+' }
 ]
+
+const currentYear = new Date().getFullYear()
+const YEARS = Array.from({ length: currentYear - 1890 + 1 }, (_, i) => currentYear - i)
 
 function FilmFilters({ filters, onFiltersChange, onReset }) {
-    const [isExpanded, setIsExpanded] = useState(false)
-    const { data: filtersData, isLoading } = useGetFilters()
-
     const [localFilters, setLocalFilters] = useState({
-        type: filters.type,
-        order: filters.order,
-        genres: filters.genres,
-        countries: filters.countries,
-        yearFrom: filters.yearFrom,
-        yearTo: filters.yearTo,
-        ratingFrom: filters.ratingFrom,
-        ratingTo: filters.ratingTo
-    })
-
-    const genres = filtersData?.genres || []
-    const countries = filtersData?.countries || []
-
-    const hasActiveFilters = Object.values(filters).some(value => {
-        return value !== undefined && value !== null && value !== ''
+        typeNumber: filters.typeNumber || '',
+        genres: filters.genres || '',
+        countries: filters.countries || '',
+        yearFrom: filters.yearFrom || '',
+        yearTo: filters.yearTo || '',
+        ratingFrom: filters.ratingFrom ?? '',
+        ratingTo: filters.ratingTo ?? '',
+        ageRating: filters.ageRating || '',
+        sort: filters.sort || 'rating.kp:-1'
     })
 
     useEffect(() => {
         setLocalFilters({
-            type: filters.type,
-            order: filters.order,
-            genres: filters.genres,
-            countries: filters.countries,
-            yearFrom: filters.yearFrom,
-            yearTo: filters.yearTo,
-            ratingFrom: filters.ratingFrom,
-            ratingTo: filters.ratingTo
+            typeNumber: filters.typeNumber || '',
+            genres: filters.genres || '',
+            countries: filters.countries || '',
+            yearFrom: filters.yearFrom || '',
+            yearTo: filters.yearTo || '',
+            ratingFrom: filters.ratingFrom ?? '',
+            ratingTo: filters.ratingTo ?? '',
+            ageRating: filters.ageRating || '',
+            sort: filters.sort || 'rating.kp:-1'
         })
-    }, [filters])
+    }, [filters.typeNumber, filters.genres, filters.countries, filters.yearFrom, filters.yearTo, filters.ratingFrom, filters.ratingTo, filters.ageRating, filters.sort])
 
-    const handleLocalFilterChange = (key, value) => {
-        setLocalFilters(prev => ({
-            ...prev,
-            [key]: value
-        }))
+    const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+        if (['typeNumber', 'genres', 'countries', 'ageRating', 'sort'].includes(key)) return value
+        if (key === 'yearFrom' || key === 'yearTo') return filters.yearFrom || filters.yearTo
+        if (key === 'ratingFrom' || key === 'ratingTo') return filters.ratingFrom !== undefined || filters.ratingTo !== undefined
+        return false
+    })
+
+    const handleLocalChange = (key, value) => {
+        setLocalFilters(prev => ({ ...prev, [key]: value }))
     }
 
-    const handleApplyFilters = () => {
-        const appliedFilters = {
-            type: localFilters.type === 'ALL' ? undefined : localFilters.type,
-            order: localFilters.order === 'RATING' ? undefined : localFilters.order,
-            genres: localFilters.genres,
-            countries: localFilters.countries,
-            yearFrom: localFilters.yearFrom ? parseInt(localFilters.yearFrom) : undefined,
-            yearTo: localFilters.yearTo ? parseInt(localFilters.yearTo) : undefined,
-            ratingFrom: localFilters.ratingFrom ? parseFloat(localFilters.ratingFrom) : undefined,
-            ratingTo: localFilters.ratingTo ? parseFloat(localFilters.ratingTo) : undefined
-        }
-
-        Object.keys(appliedFilters).forEach(key => {
-            if (appliedFilters[key] === undefined || appliedFilters[key] === null || appliedFilters[key] === '') {
-                delete appliedFilters[key]
-            }
-        })
-
-        onFiltersChange(appliedFilters)
+    const handleApply = () => {
+        const applied = {}
+        if (localFilters.typeNumber) applied.typeNumber = localFilters.typeNumber
+        if (localFilters.genres) applied.genres = localFilters.genres
+        if (localFilters.countries) applied.countries = localFilters.countries
+        if (localFilters.yearFrom) applied.yearFrom = parseInt(localFilters.yearFrom)
+        if (localFilters.yearTo) applied.yearTo = parseInt(localFilters.yearTo)
+        if (localFilters.ratingFrom !== '') applied.ratingFrom = parseFloat(localFilters.ratingFrom)
+        if (localFilters.ratingTo !== '') applied.ratingTo = parseFloat(localFilters.ratingTo)
+        if (localFilters.ageRating) applied.ageRating = localFilters.ageRating
+        if (localFilters.sort) applied.sort = localFilters.sort
+        onFiltersChange(applied)
     }
 
     const handleReset = () => {
-        const emptyFilters = {
-            type: undefined,
-            order: undefined,
-            genres: undefined,
-            countries: undefined,
-            yearFrom: undefined,
-            yearTo: undefined,
-            ratingFrom: undefined,
-            ratingTo: undefined
-        }
-        setLocalFilters(emptyFilters)
+        const empty = { typeNumber: '', genres: '', countries: '', yearFrom: '', yearTo: '', ratingFrom: '', ratingTo: '', ageRating: '', sort: 'rating.kp:-1' }
+        setLocalFilters(empty)
         onReset()
     }
 
-    const hasLocalChanges = useMemo(() => {
-        const currentFilters = {
-            type: filters.type,
-            order: filters.order,
-            genres: filters.genres,
-            countries: filters.countries,
-            yearFrom: filters.yearFrom,
-            yearTo: filters.yearTo,
-            ratingFrom: filters.ratingFrom,
-            ratingTo: filters.ratingTo
-        }
-
-        const normalizedLocal = {
-            type: localFilters.type === 'ALL' ? undefined : localFilters.type,
-            order: localFilters.order === 'RATING' ? undefined : localFilters.order,
-            genres: localFilters.genres,
-            countries: localFilters.countries,
-            yearFrom: localFilters.yearFrom ? parseInt(localFilters.yearFrom) : undefined,
-            yearTo: localFilters.yearTo ? parseInt(localFilters.yearTo) : undefined,
-            ratingFrom: localFilters.ratingFrom ? parseFloat(localFilters.ratingFrom) : undefined,
-            ratingTo: localFilters.ratingTo ? parseFloat(localFilters.ratingTo) : undefined
-        }
-
-        return JSON.stringify(currentFilters) !== JSON.stringify(normalizedLocal)
-    }, [localFilters, filters])
+    const genreOptions = [{ value: '', label: 'Все жанры' }, ...GENRES.map(g => ({ value: g, label: g }))]
+    const countryOptions = [{ value: '', label: 'Все страны' }, ...COUNTRIES.filter((v, i, a) => a.indexOf(v) === i).map(c => ({ value: c, label: c }))]
+    const yearOptions = [{ value: '', label: 'Любой' }, ...YEARS.map(y => ({ value: String(y), label: String(y) }))]
+    const sortOptions = SORT_OPTIONS.map(s => ({ value: s.value, label: s.label }))
 
     return (
-        <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg overflow-hidden">
-            <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full flex items-center justify-between p-4 hover:bg-zinc-700/30 transition-colors"
-            >
+        <div className="p-4 bg-zinc-800/30 border border-zinc-700/50 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
                 <div className="flex items-center gap-2">
                     <Filter className="w-5 h-5 text-zinc-400" />
-                    <span className="font-medium text-zinc-200">Фильтры</span>
+                    <h3 className="font-medium text-zinc-200">Фильтры</h3>
                     {hasActiveFilters && (
-                        <span className="px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
+                        <span className="px-2 py-0.5 bg-blue-600/30 text-blue-400 text-xs rounded-full">
                             Активно
                         </span>
                     )}
                 </div>
-                {isExpanded ? (
-                    <ChevronUp className="w-5 h-5 text-zinc-400" />
-                ) : (
-                    <ChevronDown className="w-5 h-5 text-zinc-400" />
+                {hasActiveFilters && (
+                    <Button variant="secondary" size="sm" onClick={handleReset} className="sm:ml-auto">
+                        <X className="w-4 h-4 mr-1" />
+                        Сбросить
+                    </Button>
                 )}
-            </button>
+            </div>
 
-            {isExpanded && (
-                <div className="p-4 border-t border-zinc-700/50 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Select
-                            label="Тип"
-                            value={localFilters.type || 'ALL'}
-                            onChange={(e) => handleLocalFilterChange('type', e.target.value)}
-                        >
-                            {FILM_TYPES.map(type => (
-                                <option key={type.value} value={type.value}>
-                                    {type.label}
-                                </option>
-                            ))}
-                        </Select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                <Select
+                    label="Тип"
+                    options={TYPE_OPTIONS}
+                    value={localFilters.typeNumber}
+                    onChange={(e) => handleLocalChange('typeNumber', e.target.value)}
+                />
+                <Select
+                    label="Жанр"
+                    options={genreOptions}
+                    value={localFilters.genres}
+                    onChange={(e) => handleLocalChange('genres', e.target.value)}
+                    searchable
+                    searchPlaceholder="Поиск жанра..."
+                />
+                <Select
+                    label="Страна"
+                    options={countryOptions}
+                    value={localFilters.countries}
+                    onChange={(e) => handleLocalChange('countries', e.target.value)}
+                    searchable
+                    searchPlaceholder="Поиск страны..."
+                />
+                <Select
+                    label="Год от"
+                    options={yearOptions}
+                    value={localFilters.yearFrom}
+                    onChange={(e) => handleLocalChange('yearFrom', e.target.value)}
+                />
+                <Select
+                    label="Год до"
+                    options={yearOptions}
+                    value={localFilters.yearTo}
+                    onChange={(e) => handleLocalChange('yearTo', e.target.value)}
+                />
+                <Select
+                    label="Рейтинг от"
+                    value={localFilters.ratingFrom}
+                    onChange={(e) => handleLocalChange('ratingFrom', e.target.value)}
+                    options={[{ value: '', label: 'Любой' }, ...['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(n => ({ value: n, label: n }))]}
+                />
+                <Select
+                    label="Рейтинг до"
+                    value={localFilters.ratingTo}
+                    onChange={(e) => handleLocalChange('ratingTo', e.target.value)}
+                    options={[{ value: '', label: 'Любой' }, ...['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map(n => ({ value: n, label: n }))]}
+                />
+                <Select
+                    label="Возраст"
+                    options={AGE_OPTIONS}
+                    value={localFilters.ageRating}
+                    onChange={(e) => handleLocalChange('ageRating', e.target.value)}
+                />
+                <Select
+                    label="Сортировка"
+                    options={sortOptions}
+                    value={localFilters.sort}
+                    onChange={(e) => handleLocalChange('sort', e.target.value)}
+                />
+            </div>
 
-                        <Select
-                            label="Сортировка"
-                            value={localFilters.order || 'RATING'}
-                            onChange={(e) => handleLocalFilterChange('order', e.target.value)}
-                        >
-                            {SORT_OPTIONS.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </Select>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {!isLoading && genres.length > 0 && (
-                            <Select
-                                label="Жанр"
-                                value={localFilters.genres || ''}
-                                onChange={(e) => handleLocalFilterChange('genres', e.target.value ? parseInt(e.target.value) : undefined)}
-                                placeholder="Выберите жанр"
-                                searchable={true}
-                                searchPlaceholder="Поиск жанра..."
-                                options={genres.map(genre => ({
-                                    value: genre.id,
-                                    label: genre.genre.charAt(0).toUpperCase() + genre.genre.slice(1)
-                                }))}
-                            />
-                        )}
-
-                        {!isLoading && countries.length > 0 && (
-                            <Select
-                                label="Страна"
-                                value={localFilters.countries || ''}
-                                onChange={(e) => handleLocalFilterChange('countries', e.target.value ? parseInt(e.target.value) : undefined)}
-                                placeholder="Выберите страну"
-                                searchable={true}
-                                searchPlaceholder="Поиск страны..."
-                                options={countries.map(country => ({
-                                    value: country.id,
-                                    label: country.country.charAt(0).toUpperCase() + country.country.slice(1)
-                                }))}
-                            />
-                        )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                            label="Год от"
-                            numeric={true}
-                            value={localFilters.yearFrom || ''}
-                            onChange={(e) => handleLocalFilterChange('yearFrom', e.target.value)}
-                            placeholder="1900"
-                        />
-
-                        <Input
-                            label="Год до"
-                            numeric={true}
-                            value={localFilters.yearTo || ''}
-                            onChange={(e) => handleLocalFilterChange('yearTo', e.target.value)}
-                            placeholder="2024"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                            label="Рейтинг от"
-                            numeric={true}
-                            value={localFilters.ratingFrom || ''}
-                            onChange={(e) => handleLocalFilterChange('ratingFrom', e.target.value)}
-                            placeholder="0"
-                        />
-
-                        <Input
-                            label="Рейтинг до"
-                            numeric={true}
-                            value={localFilters.ratingTo || ''}
-                            onChange={(e) => handleLocalFilterChange('ratingTo', e.target.value)}
-                            placeholder="10"
-                        />
-                    </div>
-
-
-
-                    <div className="flex justify-end gap-2 pt-4 border-t border-zinc-700/50">
-                        {hasActiveFilters && (
-                            <Button
-                                className="flex h-10 items-center"
-                                onClick={handleReset}
-                                variant="secondary"
-                                size="sm"
-                            >
-                                <X className="w-4 h-4 mr-1" />
-                                Сбросить
-                            </Button>
-                        )}
-                        {hasLocalChanges && (
-                            <Button
-                                className="flex h-10 items-center"
-                                onClick={handleApplyFilters}
-                                variant="primary"
-                                size="sm"
-                            >
-                                <Check className="w-4 h-4 mr-1" />
-                                Применить
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            )}
+            <div className="mt-4">
+                <Button variant="primary" size="md" onClick={handleApply}>
+                    Применить фильтры
+                </Button>
+            </div>
         </div>
     )
 }
 
 export default FilmFilters
-
