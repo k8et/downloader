@@ -22,16 +22,20 @@ function AddToFolderDropdown({ film, onClose, className = '' }) {
 
     useEffect(() => {
         const handleClickOutside = (e) => {
+            if (showModal) return
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
                 onClose?.()
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [onClose])
+    }, [onClose, showModal])
 
     useEffect(() => {
-        if (showModal) inputRef.current?.focus()
+        if (showModal) {
+            const t = setTimeout(() => inputRef.current?.focus(), 100)
+            return () => clearTimeout(t)
+        }
     }, [showModal])
 
     const handleToggleFolder = async (folderId) => {
@@ -114,6 +118,7 @@ function AddToFolderDropdown({ film, onClose, className = '' }) {
                         }}
                         placeholder="Введите название папки"
                         className="w-full"
+                        autoFocus
                     />
                     <div className="flex justify-end gap-2">
                         <Button
