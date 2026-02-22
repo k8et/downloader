@@ -1,6 +1,8 @@
-import { Star, Calendar, Clock, Film as FilmIcon, Heart } from 'lucide-react'
+import { useState } from 'react'
+import { Star, Calendar, Clock, Film as FilmIcon, Heart, FolderPlus } from 'lucide-react'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useIsFavorite, useAddToFavorites, useRemoveFromFavorites } from '../../../api/supabase/hooks'
+import AddToFolderDropdown from '../folders/AddToFolderDropdown'
 
 function FilmDescription({ film }) {
     if (!film) return null
@@ -21,6 +23,7 @@ function FilmDescription({ film }) {
     const genres = film.genres || []
     const countries = film.countries || []
     const isFavorite = isFavoriteData || false
+    const [showFolderDropdown, setShowFolderDropdown] = useState(false)
 
     const handleFavoriteToggle = async () => {
         if (!user || !kinopoiskId) return
@@ -62,17 +65,37 @@ function FilmDescription({ film }) {
                         {name}
                     </h1>
                     {user && (
-                        <button
-                            onClick={handleFavoriteToggle}
-                            disabled={addToFavoritesMutation.isPending || removeFromFavoritesMutation.isPending}
-                            className={`flex-shrink-0 p-3 rounded-lg transition-all ${isFavorite
-                                ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/50'
-                                : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50 border border-zinc-700/50 hover:text-zinc-300'
-                                } disabled:opacity-50 disabled:cursor-not-allowed`}
-                            title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
-                        >
-                            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
-                        </button>
+                        <div className="flex gap-2 flex-shrink-0">
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowFolderDropdown(v => !v)}
+                                    className={`p-3 rounded-lg transition-all border ${showFolderDropdown
+                                        ? 'bg-zinc-700/50 text-zinc-200 border-zinc-600'
+                                        : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50 border-zinc-700/50 hover:text-zinc-300'
+                                        }`}
+                                    title="Сохранить в папку"
+                                >
+                                    <FolderPlus className="w-5 h-5" />
+                                </button>
+                                {showFolderDropdown && (
+                                    <AddToFolderDropdown
+                                        film={film}
+                                        onClose={() => setShowFolderDropdown(false)}
+                                    />
+                                )}
+                            </div>
+                            <button
+                                onClick={handleFavoriteToggle}
+                                disabled={addToFavoritesMutation.isPending || removeFromFavoritesMutation.isPending}
+                                className={`p-3 rounded-lg transition-all border ${isFavorite
+                                    ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border-red-500/50'
+                                    : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50 border-zinc-700/50 hover:text-zinc-300'
+                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+                            >
+                                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+                            </button>
+                        </div>
                     )}
                 </div>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-400 mb-4">

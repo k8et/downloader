@@ -160,3 +160,100 @@ export const deleteFilmNote = async (userId, kinopoiskId) => {
     return data
 }
 
+export const getFolders = async (userId) => {
+    const { data, error } = await supabase
+        .from('film_folders')
+        .select('*')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+
+    if (error) throw error
+    return data || []
+}
+
+export const createFolder = async (userId, name) => {
+    const { data, error } = await supabase
+        .from('film_folders')
+        .insert({ user_id: userId, name: name.trim() })
+        .select()
+        .single()
+
+    if (error) throw error
+    return data
+}
+
+export const updateFolder = async (userId, folderId, name) => {
+    const { data, error } = await supabase
+        .from('film_folders')
+        .update({ name: name.trim(), updated_at: new Date().toISOString() })
+        .eq('id', folderId)
+        .eq('user_id', userId)
+        .select()
+        .single()
+
+    if (error) throw error
+    return data
+}
+
+export const deleteFolder = async (userId, folderId) => {
+    const { error } = await supabase
+        .from('film_folders')
+        .delete()
+        .eq('id', folderId)
+        .eq('user_id', userId)
+
+    if (error) throw error
+}
+
+export const getFolderItems = async (userId, folderId) => {
+    const { data, error } = await supabase
+        .from('film_folder_items')
+        .select('*')
+        .eq('folder_id', folderId)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data || []
+}
+
+export const addToFolder = async (userId, folderId, filmData) => {
+    const kinopoiskId = filmData.kinopoiskId || filmData.filmId
+    const { data, error } = await supabase
+        .from('film_folder_items')
+        .upsert({
+            folder_id: folderId,
+            user_id: userId,
+            kinopoisk_id: kinopoiskId,
+            film_data: filmData
+        }, {
+            onConflict: 'folder_id,kinopoisk_id'
+        })
+        .select()
+
+    if (error) throw error
+    return data
+}
+
+export const removeFromFolder = async (userId, folderId, kinopoiskId) => {
+    const { error } = await supabase
+        .from('film_folder_items')
+        .delete()
+        .eq('folder_id', folderId)
+        .eq('user_id', userId)
+        .eq('kinopoisk_id', kinopoiskId)
+
+    if (error) throw error
+}
+
+export const getFoldersContainingFilm = async (userId, kinopoiskId) => {
+    const { data, error } = await supabase
+        .from('film_folder_items')
+        .select('folder_id')
+        .eq('user_id', userId)
+        .eq('kinopoisk_id', kinopoiskId)
+
+    if (error) throw error
+    return (data || []).map(item => item.folder_id)
+}
+

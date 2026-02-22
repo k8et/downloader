@@ -1,157 +1,269 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
-import { Film, Star, Calendar, Heart } from 'lucide-react'
-import { useAuth } from '../../../contexts/AuthContext'
-import { addToFavorites, removeFromFavorites } from '../../../lib/supabaseQueries'
-import { useIsFavorite } from '../../../api/supabase/hooks'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { Film, Star, Calendar, Heart, FolderPlus, Trash2 } from "lucide-react";
+import { useAuth } from "../../../contexts/AuthContext";
+import {
+  addToFavorites,
+  removeFromFavorites,
+} from "../../../lib/supabaseQueries";
+import { useIsFavorite } from "../../../api/supabase/hooks";
+import AddToFolderDropdown from "../folders/AddToFolderDropdown";
 
-function MovieCard({ movie, hideFavorite = false }) {
-    const navigate = useNavigate()
-    const queryClient = useQueryClient()
-    const { user } = useAuth()
-    const kinopoiskId = movie.kinopoiskId || movie.filmId
-    const [loading, setLoading] = useState(false)
+function MovieCard({ movie, hideFavorite = false, onRemove }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const kinopoiskId = movie.kinopoiskId || movie.filmId;
+  const [loading, setLoading] = useState(false);
+  const [showFolderDropdown, setShowFolderDropdown] = useState(false);
 
-    const { data: favorite = false, isLoading: checkingFavorite } = useIsFavorite(
-        user?.id,
-        kinopoiskId,
-        {
-            enabled: !!user && !!kinopoiskId
-        }
-    )
+  const { data: favorite = false, isLoading: checkingFavorite } = useIsFavorite(
+    user?.id,
+    kinopoiskId,
+    {
+      enabled: !!user && !!kinopoiskId,
+    },
+  );
 
-    const handleFavoriteClick = async (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        if (!user) {
-            navigate('/login')
-            return
-        }
-
-        if (loading || checkingFavorite) return
-
-        setLoading(true)
-        const wasFavorite = favorite
-
-        try {
-            if (wasFavorite) {
-                await removeFromFavorites(user.id, kinopoiskId)
-                queryClient.setQueryData(['isFavorite', user.id, kinopoiskId], false)
-                queryClient.invalidateQueries({ queryKey: ['favorites', user.id] })
-            } else {
-                await addToFavorites(user.id, movie)
-                queryClient.setQueryData(['isFavorite', user.id, kinopoiskId], true)
-                queryClient.invalidateQueries({ queryKey: ['favorites', user.id] })
-            }
-        } catch (error) {
-            console.error('Error toggling favorite:', error)
-            queryClient.setQueryData(['isFavorite', user.id, kinopoiskId], wasFavorite)
-        } finally {
-            setLoading(false)
-        }
-    }
-    const posterUrl = movie.posterUrlPreview || movie.posterUrl || null
-    const name = movie.nameRu || movie.nameEn || movie.nameOriginal || 'Без названия'
-
-    const ratingKinopoisk = movie.ratingKinopoisk ?? null
-    const ratingImdb = movie.ratingImdb ?? null
-    let ratingFallback = null
-    if (movie.rating) {
-        const ratingStr = String(movie.rating).replace('%', '')
-        const ratingNum = parseFloat(ratingStr)
-        if (!isNaN(ratingNum)) ratingFallback = ratingNum
+  const handleFavoriteClick = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      navigate("/login");
+      return;
     }
 
-    const year = movie.year || ""
-    const description = movie.description || movie.shortDescription || ''
+    if (loading || checkingFavorite) return;
 
-    const cardClassName = "bg-zinc-800 rounded-lg overflow-hidden hover:bg-zinc-700/50 transition-all cursor-pointer border border-zinc-700/50 hover:border-zinc-600 group relative block no-underline text-inherit"
-    const CardWrapper = kinopoiskId ? Link : 'div'
-    const cardProps = kinopoiskId ? { to: `/viewer/${kinopoiskId}` } : {}
+    setLoading(true);
+    const wasFavorite = favorite;
 
-    return (
-        <CardWrapper
-            className={cardClassName}
-            {...cardProps}
-        >
-            {posterUrl ? (
-                <div className="w-full aspect-[2/3] bg-zinc-900 overflow-hidden relative">
-                    <img
-                        src={posterUrl}
-                        alt={name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                            e.target.style.display = 'none'
-                        }}
+    try {
+      if (wasFavorite) {
+        await removeFromFavorites(user.id, kinopoiskId);
+        queryClient.setQueryData(["isFavorite", user.id, kinopoiskId], false);
+        queryClient.invalidateQueries({ queryKey: ["favorites", user.id] });
+      } else {
+        await addToFavorites(user.id, movie);
+        queryClient.setQueryData(["isFavorite", user.id, kinopoiskId], true);
+        queryClient.invalidateQueries({ queryKey: ["favorites", user.id] });
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      queryClient.setQueryData(
+        ["isFavorite", user.id, kinopoiskId],
+        wasFavorite,
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  const posterUrl = movie.posterUrlPreview || movie.posterUrl || null;
+  const name =
+    movie.nameRu || movie.nameEn || movie.nameOriginal || "Без названия";
+
+  const ratingKinopoisk = movie.ratingKinopoisk ?? null;
+  const ratingImdb = movie.ratingImdb ?? null;
+  let ratingFallback = null;
+  if (movie.rating) {
+    const ratingStr = String(movie.rating).replace("%", "");
+    const ratingNum = parseFloat(ratingStr);
+    if (!isNaN(ratingNum)) ratingFallback = ratingNum;
+  }
+
+  const year = movie.year || "";
+  const description = movie.description || movie.shortDescription || "";
+
+  const cardClassName =
+    "bg-zinc-800 rounded-lg hover:bg-zinc-700/50 transition-all cursor-pointer border border-zinc-700/50 hover:border-zinc-600 group relative block no-underline text-inherit";
+  const CardWrapper = kinopoiskId ? Link : "div";
+  const cardProps = kinopoiskId ? { to: `/viewer/${kinopoiskId}` } : {};
+
+  return (
+    <CardWrapper className={cardClassName} {...cardProps}>
+      {posterUrl ? (
+        <div className="w-full aspect-[2/3] bg-zinc-900 relative rounded-t-lg">
+          <div className="absolute inset-0 overflow-hidden rounded-t-lg">
+            <img
+              src={posterUrl}
+              alt={name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.target.style.display = "none";
+            }}
+            />
+          </div>
+          <div className="absolute top-2 right-2 flex gap-1">
+            {user && (
+              <>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowFolderDropdown((v) => !v);
+                    }}
+                    className={`p-2 rounded-full bg-zinc-900/70 backdrop-blur-sm hover:bg-zinc-800/90 ${showFolderDropdown ? "text-zinc-200" : "text-zinc-400 hover:text-zinc-200"}`}
+                    title="Сохранить в папку"
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                  </button>
+                  {showFolderDropdown && (
+                    <AddToFolderDropdown
+                      film={movie}
+                      onClose={() => setShowFolderDropdown(false)}
                     />
-                    {user && !hideFavorite && (
-                        <button
-                            type="button"
-                            onClick={handleFavoriteClick}
-                            disabled={loading}
-                            className={`absolute top-2 right-2 p-2 rounded-full bg-zinc-900/70 backdrop-blur-sm transition-all hover:bg-zinc-800/90 ${favorite ? 'text-red-500' : 'text-zinc-400 hover:text-red-500'
-                                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            <Heart className={`w-4 h-4 ${favorite ? 'fill-current' : ''}`} />
-                        </button>
-                    )}
+                  )}
                 </div>
-            ) : (
-                <div className="w-full aspect-[2/3] bg-zinc-900 flex items-center justify-center relative">
-                    <Film className="w-16 h-16 text-zinc-600" />
-                    {user && !hideFavorite && (
-                        <button
-                            type="button"
-                            onClick={handleFavoriteClick}
-                            disabled={loading}
-                            className={`absolute top-2 right-2 p-2 rounded-full bg-zinc-800/70 backdrop-blur-sm transition-all hover:bg-zinc-700/90 ${favorite ? 'text-red-500' : 'text-zinc-400 hover:text-red-500'
-                                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            <Heart className={`w-4 h-4 ${favorite ? 'fill-current' : ''}`} />
-                        </button>
-                    )}
-                </div>
-            )}
-            <div className="p-4">
-                <h3 className="font-semibold text-base mb-2 line-clamp-2 text-zinc-100 group-hover:text-white transition-colors">
-                    {name}
-                </h3>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400 mb-2">
-                    {ratingKinopoisk != null && (
-                        <div className="flex items-center gap-1">
-                            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                            <span className="font-medium">КП {typeof ratingKinopoisk === 'number' ? ratingKinopoisk.toFixed(1) : ratingKinopoisk}</span>
-                        </div>
-                    )}
-                    {ratingImdb != null && (
-                        <div className="flex items-center gap-1">
-                            <Star className="w-3.5 h-3.5 text-amber-500/80" />
-                            <span className="font-medium">IMDB {typeof ratingImdb === 'number' ? ratingImdb.toFixed(1) : ratingImdb}</span>
-                        </div>
-                    )}
-                    {ratingFallback != null && ratingKinopoisk == null && ratingImdb == null && (
-                        <div className="flex items-center gap-1">
-                            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                            <span className="font-medium">{typeof ratingFallback === 'number' ? ratingFallback.toFixed(1) : ratingFallback}</span>
-                        </div>
-                    )}
-                    {year.length > 0 && (
-                        <div className="flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" />
-                            <span>{year}</span>
-                        </div>
-                    )}
-                </div>
-                {description && (
-                    <p className="text-xs text-zinc-500 line-clamp-2">
-                        {description}
-                    </p>
+                {!hideFavorite && (
+                  <button
+                    type="button"
+                    onClick={handleFavoriteClick}
+                    disabled={loading}
+                    className={`p-2 rounded-full bg-zinc-900/70 backdrop-blur-sm transition-all hover:bg-zinc-800/90 ${
+                      favorite
+                        ? "text-red-500"
+                        : "text-zinc-400 hover:text-red-500"
+                    } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    <Heart
+                      className={`w-4 h-4 ${favorite ? "fill-current" : ""}`}
+                    />
+                  </button>
                 )}
+                {onRemove && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onRemove();
+                    }}
+                    className="p-2 rounded-full bg-zinc-900/70 backdrop-blur-sm hover:bg-zinc-800/90 text-zinc-400 hover:text-red-400"
+                    title="Удалить"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="w-full aspect-[2/3] bg-zinc-900 flex items-center justify-center relative">
+          <Film className="w-16 h-16 text-zinc-600" />
+          <div className="absolute top-2 right-2 flex gap-1">
+            {user && (
+              <>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowFolderDropdown((v) => !v);
+                    }}
+                    className={`p-2 rounded-full bg-zinc-800/70 backdrop-blur-sm ${showFolderDropdown ? "text-zinc-200" : "text-zinc-400 hover:text-zinc-200"}`}
+                    title="Сохранить в папку"
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                  </button>
+                  {showFolderDropdown && (
+                    <AddToFolderDropdown
+                      film={movie}
+                      onClose={() => setShowFolderDropdown(false)}
+                    />
+                  )}
+                </div>
+                {!hideFavorite && (
+                  <button
+                    type="button"
+                    onClick={handleFavoriteClick}
+                    disabled={loading}
+                    className={`p-2 rounded-full bg-zinc-800/70 backdrop-blur-sm transition-all hover:bg-zinc-700/90 ${
+                      favorite
+                        ? "text-red-500"
+                        : "text-zinc-400 hover:text-red-500"
+                    } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    <Heart
+                      className={`w-4 h-4 ${favorite ? "fill-current" : ""}`}
+                    />
+                  </button>
+                )}
+                {onRemove && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onRemove();
+                    }}
+                    className="p-2 rounded-full bg-zinc-800/70 backdrop-blur-sm hover:bg-zinc-700/90 text-zinc-400 hover:text-red-400"
+                    title="Удалить"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      <div className="p-4">
+        <h3 className="font-semibold text-base mb-2 line-clamp-2 text-zinc-100 group-hover:text-white transition-colors">
+          {name}
+        </h3>
+        <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400 mb-2">
+          {ratingKinopoisk != null && (
+            <div className="flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+              <span className="font-medium">
+                КП{" "}
+                {typeof ratingKinopoisk === "number"
+                  ? ratingKinopoisk.toFixed(1)
+                  : ratingKinopoisk}
+              </span>
             </div>
-        </CardWrapper>
-    )
+          )}
+          {ratingImdb != null && (
+            <div className="flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 text-amber-500/80" />
+              <span className="font-medium">
+                IMDB{" "}
+                {typeof ratingImdb === "number"
+                  ? ratingImdb.toFixed(1)
+                  : ratingImdb}
+              </span>
+            </div>
+          )}
+          {ratingFallback != null &&
+            ratingKinopoisk == null &&
+            ratingImdb == null && (
+              <div className="flex items-center gap-1">
+                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                <span className="font-medium">
+                  {typeof ratingFallback === "number"
+                    ? ratingFallback.toFixed(1)
+                    : ratingFallback}
+                </span>
+              </div>
+            )}
+          {year.length > 0 && (
+            <div className="flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>{year}</span>
+            </div>
+          )}
+        </div>
+        {description && (
+          <p className="text-xs text-zinc-500 line-clamp-2">{description}</p>
+        )}
+      </div>
+    </CardWrapper>
+  );
 }
 
-export default MovieCard
-
+export default MovieCard;

@@ -94,3 +94,47 @@ CREATE POLICY "Users can delete their own film notes"
     ON film_notes FOR DELETE
     USING (auth.uid() = user_id);
 
+-- Папки для сохранения фильмов
+CREATE TABLE IF NOT EXISTS film_folders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS film_folder_items (
+    id BIGSERIAL PRIMARY KEY,
+    folder_id UUID NOT NULL REFERENCES film_folders(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    kinopoisk_id INTEGER NOT NULL,
+    film_data JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(folder_id, kinopoisk_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_film_folders_user_id ON film_folders(user_id);
+CREATE INDEX IF NOT EXISTS idx_film_folder_items_folder_id ON film_folder_items(folder_id);
+CREATE INDEX IF NOT EXISTS idx_film_folder_items_user_id ON film_folder_items(user_id);
+
+ALTER TABLE film_folders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE film_folder_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own film folders"
+    ON film_folders FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own film folders"
+    ON film_folders FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own film folders"
+    ON film_folders FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own film folders"
+    ON film_folders FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view their own film folder items"
+    ON film_folder_items FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own film folder items"
+    ON film_folder_items FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own film folder items"
+    ON film_folder_items FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own film folder items"
+    ON film_folder_items FOR DELETE USING (auth.uid() = user_id);
+
