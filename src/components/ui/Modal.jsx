@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
@@ -56,7 +56,8 @@ function Modal({ isOpen, onClose, title, children }) {
 
   if (!mounted) return null;
 
-  const { title: displayTitle, children: displayChildren } = cachedContent.current;
+  const { title: displayTitle, children: displayChildren } =
+    cachedContent.current;
 
   return createPortal(
     <div
