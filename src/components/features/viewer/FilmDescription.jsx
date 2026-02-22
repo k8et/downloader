@@ -68,7 +68,9 @@ function FilmDescription({ film }) {
                         <div className="flex gap-2 flex-shrink-0">
                             <div className="relative">
                                 <button
-                                    onClick={() => setShowFolderDropdown(v => !v)}
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setShowFolderDropdown(v => !v) }}
+                                    onMouseDown={(e) => e.stopPropagation()}
                                     className={`p-3 rounded-lg transition-all border ${showFolderDropdown
                                         ? 'bg-zinc-700/50 text-zinc-200 border-zinc-600'
                                         : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50 border-zinc-700/50 hover:text-zinc-300'
