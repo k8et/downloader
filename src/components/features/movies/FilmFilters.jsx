@@ -132,11 +132,6 @@ function FilmFilters({ filters, onFiltersChange, onReset }) {
                 <div className="flex items-center gap-2">
                     <Filter className="w-5 h-5 text-zinc-400" />
                     <span className="font-medium text-zinc-200">Фильтры</span>
-                    {hasActiveFilters && (
-                        <span className="px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
-                            Активно
-                        </span>
-                    )}
                 </div>
                 {isExpanded ? (
                     <ChevronUp className="w-5 h-5 text-zinc-400" />

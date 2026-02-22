@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, Film, Star, Calendar, X } from 'lucide-react'
 import { useSearchFilms } from '../../../api/kinopoisk/hooks'
 import { useDebounce } from '../../../hooks/useDebounce'
@@ -14,11 +14,27 @@ function FilmSearch() {
     const inputRef = useRef(null)
     const dropdownRef = useRef(null)
 
+    const [searchParams] = useSearchParams()
+    const showRussian = searchParams.get('showRussian') === '1'
+    const excludeRussia = !showRussian && searchParams.get('excludeRussia') !== '0' && searchParams.get('excludeRussia') !== 'false'
+
     const { data, isLoading, isError } = useSearchFilms(debouncedQuery, {
         enabled: debouncedQuery.trim().length > 2
     })
 
-    const films = data?.pages?.[0]?.docs || []
+    const rawFilms = data?.pages?.[0]?.docs || []
+    const isRussianFilm = (movie) => {
+        const countries = movie.countries || []
+        const russianLabels = ['россия', 'russia', 'ссср', 'ussr', 'советский']
+        return countries.some(c => {
+            const name = (c.country || '').toLowerCase()
+            return russianLabels.some(label => name.includes(label))
+        })
+    }
+    const films = useMemo(() => {
+        if (!excludeRussia) return rawFilms
+        return rawFilms.filter(m => !isRussianFilm(m))
+    }, [rawFilms, excludeRussia])
     const hasResults = films.length > 0 && debouncedQuery.trim().length > 2
     const showDropdown = isOpen && (hasResults || isLoading || isError)
 

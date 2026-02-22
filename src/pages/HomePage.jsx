@@ -25,6 +25,7 @@ function HomePage() {
         const ratingFrom = searchParams.get('ratingFrom')
         const ratingTo = searchParams.get('ratingTo')
         const tab = searchParams.get('tab')
+        const excludeRussia = searchParams.get('excludeRussia')
 
         if (type) filters.type = type
         if (order) filters.order = order
@@ -35,8 +36,19 @@ function HomePage() {
         if (ratingFrom) filters.ratingFrom = parseFloat(ratingFrom)
         if (ratingTo) filters.ratingTo = parseFloat(ratingTo)
         if (tab) filters.tab = tab
+        const showRussian = searchParams.get('showRussian') === '1'
+        filters.excludeRussia = showRussian ? false : (excludeRussia !== '0' && excludeRussia !== 'false')
 
         return filters
+    }
+
+    const isRussianFilm = (movie) => {
+        const countries = movie.countries || []
+        const russianLabels = ['россия', 'russia', 'ссср', 'ussr', 'советский']
+        return countries.some(c => {
+            const name = (c.country || '').toLowerCase()
+            return russianLabels.some(label => name.includes(label))
+        })
     }
 
     const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '')
@@ -100,7 +112,8 @@ function HomePage() {
     }
 
     const hasActiveFilters = useMemo(() => {
-        return Object.values(filters).some(value => {
+        return Object.entries(filters).some(([key, value]) => {
+            if (key === 'excludeRussia') return false
             return value !== undefined && value !== null && value !== ''
         })
     }, [filters])
@@ -139,7 +152,18 @@ function HomePage() {
             ? searchMoviesQuery
             : collectionQuery
 
-    const movies = activeQuery.data?.pages.flatMap(page => page.docs || page.items || page.films || []) || []
+    const rawMovies = activeQuery.data?.pages.flatMap(page => page.docs || page.items || page.films || []) || []
+    const movies = useMemo(() => {
+        const seen = new Set()
+        let result = rawMovies.filter(m => {
+            const id = m.kinopoiskId ?? m.filmId
+            if (id && seen.has(id)) return false
+            if (id) seen.add(id)
+            return true
+        })
+        if (filters.excludeRussia === false) return result
+        return result.filter(m => !isRussianFilm(m))
+    }, [rawMovies, filters.excludeRussia])
     const loading = activeQuery.isLoading || activeQuery.isFetchingNextPage
     const hasMore = activeQuery.hasNextPage
     const error = activeQuery.error
@@ -186,8 +210,12 @@ function HomePage() {
             params.set('mode', listMode)
         }
 
+        if (searchParams.get('showRussian') === '1') {
+            params.set('showRussian', '1')
+        }
+
         Object.entries(newFilters).forEach(([key, value]) => {
-            if (key === 'tab') return
+            if (key === 'tab' || key === 'excludeRussia') return
             if (value !== undefined && value !== null && value !== '') {
                 params.set(key, String(value))
             }
@@ -223,7 +251,7 @@ function HomePage() {
     }
 
     const handleResetFilters = () => {
-        const emptyFilters = {}
+        const emptyFilters = { excludeRussia: false }
         setFilters(emptyFilters)
         setSearchQuery('')
         setSearchParams({}, { replace: true })
