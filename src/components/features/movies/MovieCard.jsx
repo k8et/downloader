@@ -54,17 +54,13 @@ function MovieCard({ movie, hideFavorite = false }) {
     const posterUrl = movie.posterUrlPreview || movie.posterUrl || null
     const name = movie.nameRu || movie.nameEn || movie.nameOriginal || 'Без названия'
 
-    let rating = null
-    if (movie.ratingKinopoisk) {
-        rating = movie.ratingKinopoisk
-    } else if (movie.ratingImdb) {
-        rating = movie.ratingImdb
-    } else if (movie.rating) {
+    const ratingKinopoisk = movie.ratingKinopoisk ?? null
+    const ratingImdb = movie.ratingImdb ?? null
+    let ratingFallback = null
+    if (movie.rating) {
         const ratingStr = String(movie.rating).replace('%', '')
         const ratingNum = parseFloat(ratingStr)
-        if (!isNaN(ratingNum)) {
-            rating = ratingNum
-        }
+        if (!isNaN(ratingNum)) ratingFallback = ratingNum
     }
 
     const year = movie.year || ""
@@ -121,11 +117,23 @@ function MovieCard({ movie, hideFavorite = false }) {
                 <h3 className="font-semibold text-base mb-2 line-clamp-2 text-zinc-100 group-hover:text-white transition-colors">
                     {name}
                 </h3>
-                <div className="flex items-center gap-4 text-xs text-zinc-400 mb-2">
-                    {rating && (
+                <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400 mb-2">
+                    {ratingKinopoisk != null && (
                         <div className="flex items-center gap-1">
                             <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                            <span className="font-medium">{typeof rating === 'number' ? rating.toFixed(1) : rating}</span>
+                            <span className="font-medium">КП {typeof ratingKinopoisk === 'number' ? ratingKinopoisk.toFixed(1) : ratingKinopoisk}</span>
+                        </div>
+                    )}
+                    {ratingImdb != null && (
+                        <div className="flex items-center gap-1">
+                            <Star className="w-3.5 h-3.5 text-amber-500/80" />
+                            <span className="font-medium">IMDB {typeof ratingImdb === 'number' ? ratingImdb.toFixed(1) : ratingImdb}</span>
+                        </div>
+                    )}
+                    {ratingFallback != null && ratingKinopoisk == null && ratingImdb == null && (
+                        <div className="flex items-center gap-1">
+                            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                            <span className="font-medium">{typeof ratingFallback === 'number' ? ratingFallback.toFixed(1) : ratingFallback}</span>
                         </div>
                     )}
                     {year.length > 0 && (

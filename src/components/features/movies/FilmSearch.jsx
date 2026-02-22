@@ -94,11 +94,7 @@ function FilmSearch() {
         return film.nameRu || film.nameEn || film.nameOriginal || 'Без названия'
     }
 
-    const formatRating = (film) => {
-        if (film.ratingKinopoisk) return film.ratingKinopoisk
-        if (film.ratingImdb) return film.ratingImdb
-        return null
-    }
+    const formatRatingValue = (val) => typeof val === 'number' ? val.toFixed(1) : val
 
     return (
         <div ref={containerRef} className="relative w-full md:max-w-md">
@@ -148,7 +144,8 @@ function FilmSearch() {
                     {films.slice(0, 8).map((film, index) => {
                         const kinopoiskId = film.kinopoiskId || film.filmId
                         const name = formatFilmName(film)
-                        const rating = formatRating(film)
+                        const ratingKinopoisk = film.ratingKinopoisk ?? null
+                        const ratingImdb = film.ratingImdb ?? null
                         const year = film.year
                         const posterUrl = film.posterUrlPreview || film.posterUrl
 
@@ -180,11 +177,17 @@ function FilmSearch() {
                                     <div className="font-medium text-zinc-100 truncate mb-1">
                                         {name}
                                     </div>
-                                    <div className="flex items-center gap-3 text-xs text-zinc-400">
-                                        {rating && (
+                                    <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400">
+                                        {ratingKinopoisk != null && (
                                             <div className="flex items-center gap-1">
                                                 <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                                                <span>{typeof rating === 'number' ? rating.toFixed(1) : rating}</span>
+                                                <span>КП {formatRatingValue(ratingKinopoisk)}</span>
+                                            </div>
+                                        )}
+                                        {ratingImdb != null && (
+                                            <div className="flex items-center gap-1">
+                                                <Star className="w-3 h-3 text-amber-500/80" />
+                                                <span>IMDB {formatRatingValue(ratingImdb)}</span>
                                             </div>
                                         )}
                                         {year && (

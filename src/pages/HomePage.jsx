@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, Film } from 'lucide-react'
-import { useGetPopularFilms, useSearchFilms, useGetFilmsByFilter, useGetFilters } from '../api/kinopoisk/hooks'
+import { Search, Film, TrendingUp, Award, Tv } from 'lucide-react'
+import { useGetFilmsFromCollection, useSearchFilms, useGetFilmsByFilter, useGetFilters } from '../api/kinopoisk/hooks'
 import { useDebounce } from '../hooks/useDebounce'
 import MovieCard from '../components/features/movies/MovieCard'
 import FilmFilters from '../components/features/movies/FilmFilters'
@@ -42,6 +42,7 @@ function HomePage() {
     const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '')
     const [filters, setFilters] = useState(() => getFiltersFromURL())
     const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'all')
+    const [listMode, setListMode] = useState(() => searchParams.get('mode') || 'popular')
     const debouncedSearchQuery = useDebounce(searchQuery.trim(), 500)
 
     const genres = filtersData?.genres || []
@@ -63,10 +64,12 @@ function HomePage() {
         const urlFilters = getFiltersFromURL()
         const urlSearch = searchParams.get('search') || ''
         const urlTab = searchParams.get('tab') || 'all'
+        const urlMode = searchParams.get('mode') || 'popular'
 
         setFilters(urlFilters)
         setSearchQuery(urlSearch)
         setActiveTab(urlTab)
+        setListMode(urlMode)
     }, [searchParams])
 
     const handleTabChange = (tab) => {
@@ -104,10 +107,16 @@ function HomePage() {
 
     const shouldUseFilters = hasActiveFilters
     const shouldUseSearch = !!debouncedSearchQuery && !hasActiveFilters
-    const shouldUsePopular = !hasActiveFilters && !debouncedSearchQuery
+    const shouldUseCollection = !hasActiveFilters && !debouncedSearchQuery
 
-    const popularMoviesQuery = useGetPopularFilms({
-        enabled: !!shouldUsePopular
+    const collectionTypeMap = {
+        popular: 'TOP_POPULAR_ALL',
+        top250: 'TOP_250_MOVIES',
+        top250tv: 'TOP_250_TV_SHOWS'
+    }
+    const collectionType = collectionTypeMap[listMode] || 'TOP_POPULAR_ALL'
+    const collectionQuery = useGetFilmsFromCollection(collectionType, {
+        enabled: !!shouldUseCollection
     })
 
     const searchMoviesQuery = useSearchFilms(debouncedSearchQuery, {
@@ -128,7 +137,7 @@ function HomePage() {
         ? filtersQuery
         : shouldUseSearch
             ? searchMoviesQuery
-            : popularMoviesQuery
+            : collectionQuery
 
     const movies = activeQuery.data?.pages.flatMap(page => page.docs || page.items || page.films || []) || []
     const loading = activeQuery.isLoading || activeQuery.isFetchingNextPage
@@ -139,11 +148,27 @@ function HomePage() {
         e.preventDefault()
     }
 
-    const handleLoadMore = () => {
-        if (hasMore && !loading) {
-            activeQuery.fetchNextPage()
-        }
-    }
+    const loadMoreRef = useRef(null)
+    const fetchNextPageRef = useRef(activeQuery.fetchNextPage)
+    fetchNextPageRef.current = activeQuery.fetchNextPage
+
+    useEffect(() => {
+        if (!hasMore || loading) return
+
+        const el = loadMoreRef.current
+        if (!el) return
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (!entries[0]?.isIntersecting) return
+                if (!fetchNextPageRef.current) return
+                fetchNextPageRef.current()
+            },
+            { rootMargin: '200px' }
+        )
+        observer.observe(el)
+        return () => observer.disconnect()
+    }, [hasMore, loading])
 
     const updateURL = (newFilters, newSearch) => {
         isUpdatingURLRef.current = true
@@ -155,6 +180,10 @@ function HomePage() {
 
         if (newFilters.tab) {
             params.set('tab', newFilters.tab)
+        }
+
+        if (listMode !== 'popular') {
+            params.set('mode', listMode)
         }
 
         Object.entries(newFilters).forEach(([key, value]) => {
@@ -174,15 +203,16 @@ function HomePage() {
         const searchMatch = (debouncedSearchQuery || '') === (currentSearch || '')
         const filtersMatch = JSON.stringify(filters) === JSON.stringify(currentFilters)
 
-        if (!searchMatch || !filtersMatch) {
-            if (debouncedSearchQuery || Object.keys(filters).length > 0) {
+        const modeMatch = listMode === (searchParams.get('mode') || 'popular')
+        if (!searchMatch || !filtersMatch || !modeMatch) {
+            if (debouncedSearchQuery || Object.keys(filters).length > 0 || listMode !== 'popular') {
                 updateURL(filters, debouncedSearchQuery)
             } else {
                 isUpdatingURLRef.current = true
                 setSearchParams({}, { replace: true })
             }
         }
-    }, [debouncedSearchQuery, filters])
+    }, [debouncedSearchQuery, filters, listMode])
 
     const handleSearchChange = (value) => {
         setSearchQuery(value)
@@ -199,6 +229,18 @@ function HomePage() {
         setSearchParams({}, { replace: true })
     }
 
+    const handleListModeChange = (mode) => {
+        setListMode(mode)
+        isUpdatingURLRef.current = true
+        const params = new URLSearchParams(searchParams)
+        if (mode === 'popular') {
+            params.delete('mode')
+        } else {
+            params.set('mode', mode)
+        }
+        setSearchParams(params, { replace: true })
+    }
+
     return (
         <div className="w-full">
             <div className="mb-8">
@@ -212,6 +254,41 @@ function HomePage() {
                 activeTab={activeTab}
                 onTabChange={handleTabChange}
             />
+
+            {shouldUseCollection && (
+                <div className="mb-6 flex gap-2">
+                    <button
+                        onClick={() => handleListModeChange('popular')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${listMode === 'popular'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'
+                            }`}
+                    >
+                        <TrendingUp className="w-4 h-4" />
+                        Популярное
+                    </button>
+                    <button
+                        onClick={() => handleListModeChange('top250')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${listMode === 'top250'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'
+                            }`}
+                    >
+                        <Award className="w-4 h-4" />
+                        Топ 250
+                    </button>
+                    <button
+                        onClick={() => handleListModeChange('top250tv')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all ${listMode === 'top250tv'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-200'
+                            }`}
+                    >
+                        <Tv className="w-4 h-4" />
+                        Топ 250 сериалов
+                    </button>
+                </div>
+            )}
 
             <form onSubmit={handleSearch} className="mb-6">
                 <div className="flex flex-col gap-3 md:flex-row md:gap-3">
@@ -267,16 +344,11 @@ function HomePage() {
                         ))}
                     </div>
 
-                    {hasMore && (
-                        <div className="mt-8 text-center">
-                            <Button
-                                onClick={handleLoadMore}
-                                variant="secondary"
-                                size="md"
-                                disabled={loading}
-                            >
-                                {loading ? 'Загрузка...' : 'Загрузить еще'}
-                            </Button>
+                    {hasMore && <div ref={loadMoreRef} className="h-1" />}
+
+                    {loading && movies.length > 0 && (
+                        <div className="mt-6 flex justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-700 border-t-blue-500" />
                         </div>
                     )}
                 </>

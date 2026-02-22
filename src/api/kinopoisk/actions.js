@@ -65,14 +65,14 @@ export const getFilmById = async (id) => {
     }
 }
 
-export const getPopularFilms = async (page = 1) => {
+export const getFilmsFromCollection = async (type = 'TOP_POPULAR_ALL', page = 1) => {
     if (!API_KEY) {
         throw new Error('API ключ не настроен. Создайте файл .env с VITE_KINOPOISK_API_KEY')
     }
 
     try {
         const response = await fetch(
-            `${API_BASE_URL}/api/v2.2/films/collections?type=TOP_POPULAR_ALL&page=${page}`,
+            `${API_BASE_URL}/api/v2.2/films/collections?type=${type}&page=${page}`,
             {
                 headers: getHeaders()
             }
@@ -91,7 +91,7 @@ export const getPopularFilms = async (page = 1) => {
             total: data.total || 0
         }
     } catch (error) {
-        console.error('Error fetching popular films:', error)
+        console.error('Error fetching films from collection:', error)
         throw error
     }
 }

@@ -12,9 +12,11 @@ function FilmDescription({ film }) {
     const removeFromFavoritesMutation = useRemoveFromFavorites()
 
     const name = film.nameRu || film.nameEn || film.nameOriginal || 'Без названия'
+    const posterUrl = film.posterUrl || film.posterUrlPreview || null
     const description = film.description || film.shortDescription || ''
     const year = film.year || null
-    const rating = film.ratingKinopoisk || film.ratingImdb || null
+    const ratingKinopoisk = film.ratingKinopoisk ?? null
+    const ratingImdb = film.ratingImdb ?? null
     const filmLength = film.filmLength || null
     const genres = film.genres || []
     const countries = film.countries || []
@@ -44,7 +46,17 @@ function FilmDescription({ film }) {
 
     return (
         <div className="space-y-6">
-            <div>
+            <div className="flex gap-6 md:gap-8">
+                {posterUrl && (
+                    <div className="flex-shrink-0 w-40 sm:w-48 md:w-56 lg:w-64">
+                        <img
+                            src={posterUrl}
+                            alt={name}
+                            className="w-full aspect-[2/3] object-cover rounded-lg border border-zinc-700/50"
+                        />
+                    </div>
+                )}
+                <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4 mb-4">
                     <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-zinc-100 flex-1">
                         {name}
@@ -64,10 +76,16 @@ function FilmDescription({ film }) {
                     )}
                 </div>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-zinc-400 mb-4">
-                    {rating && (
+                    {ratingKinopoisk != null && (
                         <div className="flex items-center gap-1.5">
                             <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                            <span className="font-medium text-zinc-300">{rating}</span>
+                            <span className="font-medium text-zinc-300">КП {typeof ratingKinopoisk === 'number' ? ratingKinopoisk.toFixed(1) : ratingKinopoisk}</span>
+                        </div>
+                    )}
+                    {ratingImdb != null && (
+                        <div className="flex items-center gap-1.5">
+                            <Star className="w-4 h-4 text-amber-500/80" />
+                            <span className="font-medium text-zinc-300">IMDB {typeof ratingImdb === 'number' ? ratingImdb.toFixed(1) : ratingImdb}</span>
                         </div>
                     )}
                     {year && (
@@ -103,6 +121,7 @@ function FilmDescription({ film }) {
                         ))}
                     </div>
                 )}
+                </div>
             </div>
             {description && (
                 <div className="bg-zinc-800/30 border border-zinc-700/50 rounded-lg p-6">
