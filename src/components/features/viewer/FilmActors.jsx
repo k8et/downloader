@@ -1,9 +1,7 @@
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Users, Film } from 'lucide-react'
 
 function FilmActors({ staff }) {
-    const navigate = useNavigate()
-
     if (!staff || staff.length === 0) return null
 
     const actors = staff
@@ -12,12 +10,6 @@ function FilmActors({ staff }) {
 
     if (actors.length === 0) return null
 
-    const handleActorClick = (staffId) => {
-        if (staffId) {
-            navigate(`/person/${staffId}`)
-        }
-    }
-
     return (
         <div className="space-y-4">
             <h3 className="text-xl font-light text-zinc-100 flex items-center gap-2">
@@ -25,11 +17,14 @@ function FilmActors({ staff }) {
                 Актеры и режиссеры
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {actors.map((actor) => (
-                    <div
+                {actors.map((actor) => {
+                    const ActorWrapper = actor.staffId ? Link : 'div'
+                    const actorProps = actor.staffId ? { to: `/person/${actor.staffId}` } : {}
+                    return (
+                    <ActorWrapper
                         key={actor.staffId}
-                        onClick={() => handleActorClick(actor.staffId)}
-                        className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg overflow-hidden hover:bg-zinc-700/50 transition-all group cursor-pointer"
+                        className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg overflow-hidden hover:bg-zinc-700/50 transition-all group cursor-pointer block no-underline text-inherit"
+                        {...actorProps}
                     >
                         {actor.posterUrl ? (
                             <div className="w-full aspect-[2/3] bg-zinc-900 overflow-hidden">
@@ -57,8 +52,9 @@ function FilmActors({ staff }) {
                                 </p>
                             )}
                         </div>
-                    </div>
-                ))}
+                    </ActorWrapper>
+                )
+                })}
             </div>
         </div>
     )

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Film, Star, Calendar, Heart } from 'lucide-react'
 import { useAuth } from '../../../contexts/AuthContext'
@@ -21,13 +21,8 @@ function MovieCard({ movie, hideFavorite = false }) {
         }
     )
 
-    const handleClick = () => {
-        if (kinopoiskId) {
-            navigate(`/viewer/${kinopoiskId}`)
-        }
-    }
-
     const handleFavoriteClick = async (e) => {
+        e.preventDefault()
         e.stopPropagation()
         if (!user) {
             navigate('/login')
@@ -75,10 +70,14 @@ function MovieCard({ movie, hideFavorite = false }) {
     const year = movie.year || ""
     const description = movie.description || movie.shortDescription || ''
 
+    const cardClassName = "bg-zinc-800 rounded-lg overflow-hidden hover:bg-zinc-700/50 transition-all cursor-pointer border border-zinc-700/50 hover:border-zinc-600 group relative block no-underline text-inherit"
+    const CardWrapper = kinopoiskId ? Link : 'div'
+    const cardProps = kinopoiskId ? { to: `/viewer/${kinopoiskId}` } : {}
+
     return (
-        <div
-            className="bg-zinc-800 rounded-lg overflow-hidden hover:bg-zinc-700/50 transition-all cursor-pointer border border-zinc-700/50 hover:border-zinc-600 group relative"
-            onClick={handleClick}
+        <CardWrapper
+            className={cardClassName}
+            {...cardProps}
         >
             {posterUrl ? (
                 <div className="w-full aspect-[2/3] bg-zinc-900 overflow-hidden relative">
@@ -92,6 +91,7 @@ function MovieCard({ movie, hideFavorite = false }) {
                     />
                     {user && !hideFavorite && (
                         <button
+                            type="button"
                             onClick={handleFavoriteClick}
                             disabled={loading}
                             className={`absolute top-2 right-2 p-2 rounded-full bg-zinc-900/70 backdrop-blur-sm transition-all hover:bg-zinc-800/90 ${favorite ? 'text-red-500' : 'text-zinc-400 hover:text-red-500'
@@ -106,6 +106,7 @@ function MovieCard({ movie, hideFavorite = false }) {
                     <Film className="w-16 h-16 text-zinc-600" />
                     {user && !hideFavorite && (
                         <button
+                            type="button"
                             onClick={handleFavoriteClick}
                             disabled={loading}
                             className={`absolute top-2 right-2 p-2 rounded-full bg-zinc-800/70 backdrop-blur-sm transition-all hover:bg-zinc-700/90 ${favorite ? 'text-red-500' : 'text-zinc-400 hover:text-red-500'
@@ -140,7 +141,7 @@ function MovieCard({ movie, hideFavorite = false }) {
                     </p>
                 )}
             </div>
-        </div>
+        </CardWrapper>
     )
 }
 

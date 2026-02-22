@@ -1,7 +1,7 @@
-import { Copy, ExternalLink, Download } from 'lucide-react'
+import { Copy, ExternalLink } from 'lucide-react'
 import Button from '../../ui/Button'
 
-function M3u8UrlList({ urls, onDownload }) {
+function M3u8UrlList({ urls }) {
     if (urls.length === 0) return null
 
     const handleCopy = async (url) => {
@@ -41,14 +41,6 @@ function M3u8UrlList({ urls, onDownload }) {
                                     title="Открыть"
                                 >
                                     <ExternalLink className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                    onClick={() => onDownload(m3u8Url)}
-                                    variant="success"
-                                    size="sm"
-                                    title="Скачать"
-                                >
-                                    <Download className="w-3 h-3" />
                                 </Button>
                             </div>
                         </div>
